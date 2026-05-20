@@ -1,0 +1,131 @@
+### Searching for flights
+POST https://api.duffel.com/air/offer_requests
+Accept-Encoding: gzip
+Accept: application/json
+Duffel-Version: v2
+Authorization: Bearer duffel_test_yxP33-kImoqD2cfpgmP4kOwoM0BwQD7Q-1ZJprQn19U
+Content-Type: application/json
+
+{
+  "data": {
+    "slices": [
+      {
+        "origin": "NYC",
+        "destination": "ATL",
+        "departure_date": "2026-06-21"
+      },
+      {
+        "origin": "ATL",
+        "destination": "NYC",
+        "departure_date": "2026-07-21"
+      }
+    ],
+    "passengers": [
+      {
+        "type": "adult"
+      },
+      {
+        "type": "adult"
+      },
+      {
+        "age": 1
+      }
+    ],
+    "cabin_class": "business"
+  }
+}
+
+
+### Cabin Class Filter
+
+# curl -X POST --compressed "https://api.duffel.com/air/offer_requests"
+#-H "Accept-Encoding: gzip"
+#-H "Accept: application/json"
+#-H "Content-Type: application/json"
+#-H "Duffel-Version: v2"
+#-H "Authorization: Bearer $YOUR_ACCESS_TOKEN"
+#-d '{
+#  "data": {
+#    "slices" : [
+#      {
+#        "origin": "NYC",
+#        "destination": "ATL",
+#        "departure_date": "2021-06-21"
+#      },
+#      {
+#        "origin": "ATL",
+#        "destination": "NYC",
+#        "departure_date": "2021-07-21"
+#      }
+#    ],
+#    "passengers": [{ "type": "adult" }, { "type": "adult" }, { "age": 1 }],
+#    "cabin_class": "business"
+#  }
+#}'
+POST https://api.duffel.com/air/offer_requests
+Accept-Encoding: gzip
+Accept: application/json
+Duffel-Version: v2
+Authorization: Bearer duffel_test_yxP33-kImoqD2cfpgmP4kOwoM0BwQD7Q-1ZJprQn19U
+Content-Type: application/json
+
+{
+  "data": {
+    "slices": [
+      {
+        "origin": "NYC",
+        "destination": "ATL",
+        "departure_date": "2026-06-21"
+      },
+      {
+        "origin": "ATL",
+        "destination": "NYC",
+        "departure_date": "2026-07-21"
+      }
+    ],
+    "passengers": [
+      {
+        "type": "adult"
+      },
+      {
+        "type": "adult"
+      },
+      {
+        "age": 1
+      }
+    ],
+    "cabin_class": "business"
+  }
+}
+
+
+### Search for an accommodation
+POST https://api.duffel.com/stays/search
+Accept-Encoding: gzip
+Accept: application/json
+Duffel-Version: v2
+Authorization: Bearer duffel_test_yxP33-kImoqD2cfpgmP4kOwoM0BwQD7Q-1ZJprQn19U
+Content-Type: application/json
+
+{
+  "data": {
+    "rooms": "1",
+    "location": {
+      "radius": "5",
+      "geographic_coordinates": {
+        "longitude": -0.1416,
+        "latitude": 51.5071
+      }
+    },
+    "check_out_date": "2023-12-07",
+    "check_in_date": "2023-12-04",
+    "guests": [
+      {
+        "type": "adult"
+      },
+      {
+        "type": "adult"
+      }
+    ]
+  }
+}

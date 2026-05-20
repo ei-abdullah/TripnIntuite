@@ -1,0 +1,11 @@
+services:
+  postgres:
+    image: "postgres:latest"
+    container_name: "hackathon_db"
+    restart: "always"
+    environment:
+      - "POSTGRES_DB=travel_db"
+      - "POSTGRES_PASSWORD=admin"
+      - "POSTGRES_USER=user"
+    ports:
+      - "5432:5432"
