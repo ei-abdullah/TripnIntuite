@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { parsePrompt, type Intuition } from "./lib/api";
+import { parsePrompt, getNearestAirport, ApiError, type Intuition } from "./lib/api";
 import { useTripStore } from "./lib/tripStore";
+import { useAuthStore } from "./lib/authStore";
 import AgentConsole from "./components/AgentConsole";
 
 const DEMO_PROMPT =
@@ -14,21 +15,58 @@ export default function HomePage() {
   const storedPrompt = useTripStore((s) => s.prompt);
   const setStoredPrompt = useTripStore((s) => s.setPrompt);
   const setIntuitions = useTripStore((s) => s.setIntuitions);
+  const departureAirport = useTripStore((s) => s.departureAirport);
+  const setDepartureAirport = useTripStore((s) => s.setDepartureAirport);
+  const hydrated = useAuthStore((s) => s.hydrated);
+  const token = useAuthStore((s) => s.token);
 
   const [text, setText] = useState(storedPrompt || "");
   const [running, setRunning] = useState(false);
   const [localIntuitions, setLocalIntuitions] = useState<Intuition[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [locState, setLocState] = useState<"idle" | "detecting" | "error">("idle");
   const taRef = useRef<HTMLTextAreaElement>(null);
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) return;
+    setLocState("detecting");
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        try {
+          const airport = await getNearestAirport(coords.latitude, coords.longitude);
+          setDepartureAirport(airport);
+          setLocState("idle");
+        } catch {
+          setLocState("error");
+        }
+      },
+      () => setLocState("error"),
+      { timeout: 8000 }
+    );
+  };
 
   useEffect(() => {
     if (taRef.current) taRef.current.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!departureAirport && locState === "idle") {
+      detectLocation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const explore = async () => {
     const value = text.trim() || DEMO_PROMPT;
     setStoredPrompt(value);
     setText(value);
+
+    // Auth gate: prompt is preserved in tripStore; return here after login.
+    if (hydrated && !token) {
+      router.push("/signup");
+      return;
+    }
+
     setError(null);
     setLocalIntuitions([]);
     setRunning(true);
@@ -42,10 +80,17 @@ export default function HomePage() {
       setIntuitions(result);
       setLocalIntuitions(result);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Unknown error";
-      setError(
-        `Backend call failed: ${msg}. Is the Spring Boot API running on port 8080? (frontend proxies /api/* via next.config.ts rewrites)`,
-      );
+      let msg: string;
+      if (e instanceof ApiError) {
+        if (e.status === 401) {
+          router.push("/login");
+          return;
+        }
+        msg = e.message;
+      } else {
+        msg = e instanceof Error ? e.message : "Unknown error";
+      }
+      setError(msg);
       setRunning(false);
     }
   };
@@ -86,6 +131,44 @@ export default function HomePage() {
                 <span className="arrow">→</span>
               </button>
             </div>
+          </div>
+
+          <div
+            style={{
+              marginTop: "20px",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              fontSize: "11px",
+              textTransform: "uppercase",
+              letterSpacing: "0.2em",
+              color: "var(--muted)",
+            }}
+          >
+            Departing from
+            <span style={{ color: "var(--rule-strong)" }}>·</span>
+            {departureAirport ? (
+              <>
+                <span style={{ color: "var(--ink)" }}>{departureAirport.name}</span>
+                <button
+                  onClick={() => { setDepartureAirport(null); setLocState("idle"); }}
+                  style={{ color: "var(--muted-2)", fontSize: "10px", cursor: "pointer" }}
+                >
+                  ✕
+                </button>
+              </>
+            ) : locState === "detecting" ? (
+              <span>Detecting…</span>
+            ) : locState === "error" ? (
+              <span style={{ color: "var(--accent)" }}>Could not detect · <button onClick={detectLocation} style={{ cursor: "pointer", color: "var(--accent)" }}>Retry</button></span>
+            ) : (
+              <button
+                onClick={detectLocation}
+                style={{ color: "var(--accent)", cursor: "pointer", borderBottom: "1px solid var(--accent)" }}
+              >
+                Detect location
+              </button>
+            )}
           </div>
 
           {!running && (

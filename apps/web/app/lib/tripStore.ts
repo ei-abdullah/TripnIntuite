@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Destination } from "./data";
-import type { Intuition } from "./api";
+import type { Intuition, NearestAirport } from "./api";
 
 type TripState = {
   prompt: string;
@@ -8,6 +8,7 @@ type TripState = {
   picks: Record<number, Destination>;
   departure: string;
   days: number[];
+  departureAirport: NearestAirport | null;
 
   setPrompt: (s: string) => void;
   setIntuitions: (i: Intuition[]) => void;
@@ -15,6 +16,7 @@ type TripState = {
   setDeparture: (s: string) => void;
   setDay: (i: number, v: number) => void;
   initDaysIfEmpty: (count: number) => void;
+  setDepartureAirport: (a: NearestAirport | null) => void;
   reset: () => void;
 };
 
@@ -26,6 +28,7 @@ export const useTripStore = create<TripState>((set) => ({
   picks: {},
   departure: DEFAULT_DEPARTURE,
   days: [],
+  departureAirport: null,
 
   setPrompt: (s) => set({ prompt: s }),
   setIntuitions: (intuitions) => set({ intuitions, picks: {}, days: [] }),
@@ -42,6 +45,7 @@ export const useTripStore = create<TripState>((set) => ({
     set((state) =>
       state.days.length === count ? state : { days: Array(count).fill(3) },
     ),
+  setDepartureAirport: (a) => set({ departureAirport: a }),
   reset: () =>
     set({
       prompt: "",
@@ -49,6 +53,7 @@ export const useTripStore = create<TripState>((set) => ({
       picks: {},
       departure: DEFAULT_DEPARTURE,
       days: [],
+      departureAirport: null,
     }),
 }));
 

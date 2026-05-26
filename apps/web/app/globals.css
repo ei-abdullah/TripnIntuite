@@ -507,3 +507,23 @@ img { display: block; max-width: 100%; }
 .stagger > *:nth-child(4) { animation-delay: .20s; }
 .stagger > *:nth-child(5) { animation-delay: .26s; }
 .stagger > *:nth-child(6) { animation-delay: .32s; }
+
+
+/* ---------------------------------------------------------------- */
+/* Header auth state                                                */
+/* ---------------------------------------------------------------- */
+.nav-user {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  padding: 6px 0;
+  margin-left: 8px;
+}
+.nav-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
