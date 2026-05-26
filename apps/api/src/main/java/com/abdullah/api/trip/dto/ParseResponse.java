@@ -1,7 +1,7 @@
-package com.abdullah.api.model.prompt;
+package com.abdullah.api.trip.dto;
 
-import com.abdullah.api.model.prompt.MatchedLocations.MatchedLocation;
-import com.abdullah.api.model.prompt.ParsedSegments.Segment;
+import com.abdullah.api.trip.agent.MatchedLocations.MatchedLocation;
+import com.abdullah.api.trip.agent.ParsedSegments.Segment;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.abdullah.api.jwt;
+package com.abdullah.api.auth.jwt;
 
 import com.abdullah.api.user.User;
 import io.jsonwebtoken.Claims;
@@ -18,6 +18,9 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
+    // ~100 years. Effectively permanent for hackathon purposes — no refresh flow.
+    private static final long ACCESS_TOKEN_TTL_MS = 1000L * 60 * 60 * 24 * 365 * 100;
+
     @Value("${security.jwt.secret-key}")
     private String SECRET_KEY;
 
@@ -30,22 +33,7 @@ public class JwtService {
                 .add(claims)
                 .subject(user.getEmail())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000L * 60 * 30)) // 30 mins
-                .and()
-                .signWith(getKey())
-                .compact();
-    }
-
-    public String generateRefreshToken(User user) {
-        Map<String, Object> claims = new HashMap<>();
-
-        return Jwts
-                .builder()
-                .claims()
-                .add(claims)
-                .subject(user.getEmail())
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 30)) // 30 days
+                .expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_TTL_MS))
                 .and()
                 .signWith(getKey())
                 .compact();

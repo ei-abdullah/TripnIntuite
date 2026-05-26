@@ -1,4 +1,4 @@
-package com.abdullah.api.jwt;
+package com.abdullah.api.auth.jwt;
 
 import com.abdullah.api.auth.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
@@ -30,12 +30,6 @@ public class JwtFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        String path = request.getRequestURI();
-        if (path.startsWith("/api/auth/login") || path.startsWith("/api/auth/signup")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);

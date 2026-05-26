@@ -1,7 +1,7 @@
-package com.abdullah.api.service;
+package com.abdullah.api.trip;
 
-import com.abdullah.api.model.prompt.MatchedLocations;
-import com.abdullah.api.model.prompt.ParsedSegments.Segment;
+import com.abdullah.api.trip.agent.MatchedLocations;
+import com.abdullah.api.trip.agent.ParsedSegments.Segment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;

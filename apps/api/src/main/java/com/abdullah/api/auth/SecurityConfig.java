@@ -1,8 +1,7 @@
-package com.abdullah.api.config;
+package com.abdullah.api.auth;
 
-
-import com.abdullah.api.auth.CustomUserDetailsService;
-import com.abdullah.api.jwt.JwtFilter;
+import com.abdullah.api.auth.jwt.JwtFilter;
+import com.abdullah.api.exception.DelegatedAuthEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,37 +22,36 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final JwtFilter jwtFilter;
+    private final DelegatedAuthEntryPoint authEntryPoint;
 
     public SecurityConfig(
             CustomUserDetailsService userDetailsService,
-            JwtFilter jwtFilter
+            JwtFilter jwtFilter,
+            DelegatedAuthEntryPoint authEntryPoint
     ) {
         this.userDetailsService = userDetailsService;
         this.jwtFilter = jwtFilter;
+        this.authEntryPoint = authEntryPoint;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(request -> {
-                    var config = request
-                            .requestMatchers(
-                                    "/api/v1/auth/login",
-                                    "/api/v1/auth/signup",
-                                    "/api/v1/auth/forgetPassword",
-                                    "/api/v1/auth/signup/verify",
-                                    "/api/v1/auth/refresh",
-                                    "/api/v1/university/getWithFaculties",
-                                    "/ws/**"
-                            )
-                            .permitAll();
-
-                    config.anyRequest().authenticated();
-                })
+                .authorizeHttpRequests(request -> request
+                        .requestMatchers(
+                                "/api/v1/auth/signup",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/signup/verify",
+                                "/api/trip/nearest-airport"
+                        )
+                        .permitAll()
+                        .anyRequest().authenticated()
+                )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(authEntryPoint))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
@@ -62,7 +60,6 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
-
     }
 
     @Bean
