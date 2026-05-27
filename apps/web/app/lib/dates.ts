@@ -40,3 +40,24 @@ export function addDays(date: Date, days: number): Date {
 export function fmtUSD(n: number): string {
   return "$" + n.toLocaleString("en-US");
 }
+
+export function fmtISO(d: Date): string {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function fmtDuration(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
+export function fmtClock(iso: string): string {
+  const t = iso.split("T")[1];
+  if (!t) return iso;
+  return t.slice(0, 5);
+}

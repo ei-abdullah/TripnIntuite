@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
-import { Instrument_Serif, Manrope, JetBrains_Mono } from "next/font/google";
+import type {Metadata} from "next";
+import {Instrument_Serif, JetBrains_Mono, Manrope} from "next/font/google";
 import "./globals.css";
 import Shell from "./components/Shell";
 

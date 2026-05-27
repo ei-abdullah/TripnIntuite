@@ -1,131 +1,132 @@
-### Searching for flights
-POST https://api.duffel.com/air/offer_requests
-Accept-Encoding: gzip
-Accept: application/json
-Duffel-Version: v2
-Authorization: Bearer duffel_test_yxP33-kImoqD2cfpgmP4kOwoM0BwQD7Q-1ZJprQn19U
-Content-Type: application/json
-
-{
-  "data": {
-    "slices": [
-      {
-        "origin": "NYC",
-        "destination": "ATL",
-        "departure_date": "2026-06-21"
-      },
-      {
-        "origin": "ATL",
-        "destination": "NYC",
-        "departure_date": "2026-07-21"
-      }
-    ],
-    "passengers": [
-      {
-        "type": "adult"
-      },
-      {
-        "type": "adult"
-      },
-      {
-        "age": 1
-      }
-    ],
-    "cabin_class": "business"
-  }
-}
-
-
-### Cabin Class Filter
-
-# curl -X POST --compressed "https://api.duffel.com/air/offer_requests"
-#-H "Accept-Encoding: gzip"
-#-H "Accept: application/json"
-#-H "Content-Type: application/json"
-#-H "Duffel-Version: v2"
-#-H "Authorization: Bearer $YOUR_ACCESS_TOKEN"
-#-d '{
-#  "data": {
-#    "slices" : [
-#      {
-#        "origin": "NYC",
-#        "destination": "ATL",
-#        "departure_date": "2021-06-21"
-#      },
-#      {
-#        "origin": "ATL",
-#        "destination": "NYC",
-#        "departure_date": "2021-07-21"
-#      }
-#    ],
-#    "passengers": [{ "type": "adult" }, { "type": "adult" }, { "age": 1 }],
-#    "cabin_class": "business"
+### Shortest flight from Islamabad (ISB) to London (LHR) on 1st July 2026 with no stops, for 1 adult, in USD currency.
+# curl --request POST
+#     --url https://api.liteapi.travel/v3.0/flights/rates
+#     --header 'X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953'
+#     --header 'accept: application/json'
+#     --header 'content-type: application/json'
+#     --data '
+#{
+#  "legs": [
+#    {
+#      "origin": "ISB",
+#      "destination": "LHR",
+#      "date": "2026-07-01",
+#      "direction": "OUTBOUND"
+#    }
+#  ],
+#  "adults": 1,
+#  "children": 0,
+#  "infants": 0,
+#  "maxStops": 0,
+#  "currency": "USD",
+#  "filters": {
+#    "maxStops": 0
 #  }
-#}'
-POST https://api.duffel.com/air/offer_requests
-Accept-Encoding: gzip
-Accept: application/json
-Duffel-Version: v2
-Authorization: Bearer duffel_test_yxP33-kImoqD2cfpgmP4kOwoM0BwQD7Q-1ZJprQn19U
+#}
+#'
+POST https://api.liteapi.travel/v3.0/flights/rates
+X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953
+accept: application/json
 Content-Type: application/json
 
+
 {
-  "data": {
-    "slices": [
-      {
-        "origin": "NYC",
-        "destination": "ATL",
-        "departure_date": "2026-06-21"
-      },
-      {
-        "origin": "ATL",
-        "destination": "NYC",
-        "departure_date": "2026-07-21"
-      }
-    ],
-    "passengers": [
-      {
-        "type": "adult"
-      },
-      {
-        "type": "adult"
-      },
-      {
-        "age": 1
-      }
-    ],
-    "cabin_class": "business"
+  "legs": [
+    {
+      "origin": "ISB",
+      "destination": "LHR",
+      "date": "2026-07-01",
+      "direction": "OUTBOUND"
+    }
+  ],
+  "adults": 1,
+  "children": 0,
+  "infants": 0,
+  "maxStops": 0,
+  "currency": "USD",
+  "filters": {
+    "maxStops": 0
   }
 }
 
 
-### Search for an accommodation
-POST https://api.duffel.com/stays/search
-Accept-Encoding: gzip
-Accept: application/json
-Duffel-Version: v2
-Authorization: Bearer duffel_test_yxP33-kImoqD2cfpgmP4kOwoM0BwQD7Q-1ZJprQn19U
+###
+### Multi-leg based flight
+
+# curl --request POST
+#     --url https://api.liteapi.travel/v3.0/flights/rates
+#     --header 'X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953'
+#     --header 'accept: application/json'
+#     --header 'content-type: application/json'
+#     --data '
+#{
+#  "legs": [
+#    {
+#      "origin": "ISB",
+#      "destination": "LHR",
+#      "date": "2026-07-01",
+#      "direction": "OUTBOUND"
+#    },
+#    {
+#      "origin": "LHR",
+#      "destination": "AQJ",
+#      "date": "2026-07-05",
+#      "direction": "OUTBOUND"
+#    },
+#    {
+#      "origin": "AQJ",
+#      "destination": "ISB",
+#      "date": "2026-07-12",
+#      "direction": "OUTBOUND"
+#    }
+#  ],
+#  "adults": 1,
+#  "children": 0,
+#  "infants": 0,
+#  "maxStops": 0,
+#  "currency": "USD",
+#  "cabinClass": "BUSINESS",
+#  "filters": {
+#    "maxStops": 0
+#  }
+#}
+#'
+POST https://api.liteapi.travel/v3.0/flights/rates
+X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953
+accept: application/json
 Content-Type: application/json
 
 {
-  "data": {
-    "rooms": "1",
-    "location": {
-      "radius": "5",
-      "geographic_coordinates": {
-        "longitude": -0.1416,
-        "latitude": 51.5071
-      }
+  "legs": [
+    {
+      "origin": "ISB",
+      "destination": "LHR",
+      "date": "2026-07-01",
+      "direction": "OUTBOUND"
     },
-    "check_out_date": "2023-12-07",
-    "check_in_date": "2023-12-04",
-    "guests": [
-      {
-        "type": "adult"
-      },
-      {
-        "type": "adult"
-      }
-    ]
+    {
+      "origin": "LHR",
+      "destination": "AQJ",
+      "date": "2026-07-05",
+      "direction": "OUTBOUND"
+    },
+    {
+      "origin": "AQJ",
+      "destination": "ISB",
+      "date": "2026-07-12",
+      "direction": "OUTBOUND"
+    }
+  ],
+  "adults": 1,
+  "children": 0,
+  "infants": 0,
+  "maxStops": 0,
+  "currency": "USD",
+  "cabinClass": "ECONOMY",
+  "filters": {
+    "maxStops": 2
   }
 }
+
+
+###

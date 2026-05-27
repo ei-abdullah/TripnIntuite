@@ -1,5 +1,111 @@
-import { Destination } from "./data";
+import {Destination} from "./data";
+import {useAuthStore} from "./authStore";
 
+// ----------------------------------------------------------------
+// Shared types (mirror backend DTOs)
+// ----------------------------------------------------------------
+export type UserDto = {
+  id: number;
+  email: string;
+  username: string;
+  roles: string[];
+  verified: boolean;
+};
+
+export type AuthResponse = {
+  accessToken: string;
+  user: UserDto;
+};
+
+export type ApiErrorBody = {
+  path: string;
+  message: string;
+  statusCode: number;
+  instantDateTime: string;
+};
+
+export class ApiError extends Error {
+  status: number;
+  body: ApiErrorBody | null;
+  constructor(status: number, message: string, body: ApiErrorBody | null) {
+    super(message);
+    this.status = status;
+    this.body = body;
+  }
+}
+
+// ----------------------------------------------------------------
+// Authenticated fetch
+// ----------------------------------------------------------------
+async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  const token = useAuthStore.getState().token;
+  const headers = new Headers(init.headers);
+  if (!headers.has("Content-Type") && init.body) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  const res = await fetch(path, { ...init, headers });
+
+  if (res.status === 401) {
+    // Token is invalid or expired — drop it.
+    useAuthStore.getState().clearAuth();
+  }
+  return res;
+}
+
+async function readError(res: Response): Promise<ApiError> {
+  let body: ApiErrorBody | null = null;
+  try {
+    body = (await res.json()) as ApiErrorBody;
+  } catch {
+    // non-JSON body
+  }
+  const msg = body?.message ?? `${res.status} ${res.statusText}`;
+  return new ApiError(res.status, msg, body);
+}
+
+// ----------------------------------------------------------------
+// Auth endpoints
+// ----------------------------------------------------------------
+export async function signup(input: {
+  email: string;
+  username: string;
+  password: string;
+}): Promise<UserDto> {
+  const res = await apiFetch("/api/v1/auth/signup", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw await readError(res);
+  return res.json();
+}
+
+export async function login(input: {
+  email: string;
+  password: string;
+}): Promise<AuthResponse> {
+  const res = await apiFetch("/api/v1/auth/login", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw await readError(res);
+  return res.json();
+}
+
+export async function getMe(): Promise<UserDto> {
+  const res = await apiFetch("/api/v1/auth/me", { method: "GET" });
+  if (!res.ok) throw await readError(res);
+  return res.json();
+}
+
+export function logout(): void {
+  useAuthStore.getState().clearAuth();
+}
+
+// ----------------------------------------------------------------
+// Trip parse — same as before, now authenticated
+// ----------------------------------------------------------------
 type BackendMatchedLocation = {
   id: string;
   name: string;
@@ -61,15 +167,63 @@ function toIntuition(segment: BackendSegmentWithLocations, idx: number): Intuiti
   };
 }
 
+export type FlightOption = {
+  offerId: string;
+  carrierCode: string;
+  carrierName: string;
+  carrierLogo: string;
+  flightNumber: string;
+  departureTime: string;
+  arrivalTime: string;
+  durationMinutes: number;
+  stops: number;
+  via: string[];
+  price: number;
+  currency: string;
+  isCheapest: boolean;
+};
+
+export type LegResult = {
+  origin: string;
+  destination: string;
+  date: string;
+  options: FlightOption[];
+};
+
+export async function getFlightsForLeg(
+  origin: string,
+  destination: string,
+  date: string,
+): Promise<LegResult> {
+  const res = await apiFetch(
+    `/api/trip/flights?origin=${origin}&destination=${destination}&date=${date}`,
+    { method: "GET" },
+  );
+  if (!res.ok) throw await readError(res);
+  return res.json();
+}
+
+export type NearestAirport = {
+  id: string;
+  name: string;
+  formattedAddress: string;
+  latitude: number;
+  longitude: number;
+  iataCode: string;
+};
+
+export async function getNearestAirport(lat: number, lng: number): Promise<NearestAirport> {
+  const res = await fetch(`/api/trip/nearest-airport?lat=${lat}&lng=${lng}`);
+  if (!res.ok) throw await readError(res);
+  return res.json();
+}
+
 export async function parsePrompt(prompt: string): Promise<Intuition[]> {
-  const res = await fetch(`/api/trip/parse`, {
+  const res = await apiFetch("/api/trip/parse", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt }),
   });
-  if (!res.ok) {
-    throw new Error(`Parse failed: ${res.status} ${res.statusText}`);
-  }
+  if (!res.ok) throw await readError(res);
   const data: BackendParseResponse = await res.json();
   return data.segments.map(toIntuition);
 }

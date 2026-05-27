@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { Intuition } from "../lib/api";
+import {useEffect, useState} from "react";
+import type {Intuition} from "../lib/api";
 
 type ConsoleLine = {
   ts: string;

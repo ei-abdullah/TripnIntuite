@@ -1,24 +1,93 @@
 "use client";
 
-import { useState } from "react";
-import type { AirlineOption } from "../lib/data";
-import { fmtUSD } from "../lib/dates";
+import type {FlightOption} from "../lib/api";
+import {fmtClock, fmtDuration, fmtUSD} from "../lib/dates";
 
-export default function AirlineChips({ options }: { options: AirlineOption[] }) {
-  const [sel, setSel] = useState(0);
+export default function AirlineChips({
+  options,
+  selected,
+  onSelect,
+}: {
+  options: FlightOption[];
+  selected: number;
+  onSelect: (index: number) => void;
+}) {
+  if (!options.length) {
+    return (
+      <div className="airline-chips">
+        <span style={{ color: "var(--muted)", fontSize: 12, padding: "8px 0" }}>
+          No flights returned for this leg.
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="airline-chips">
-      {options.map((o, i) => (
-        <button
-          key={i}
-          className={`airline-chip ${sel === i ? "selected" : ""}`}
-          onClick={() => setSel(i)}
-        >
-          <span className="nm">{o.carrier}</span>
-          <span className="du">{o.dur}</span>
-          <span className="pr">{fmtUSD(o.price)}</span>
-        </button>
-      ))}
+      {options.map((o, i) => {
+        const stopsLabel =
+          o.stops === 0 ? "Direct" : `${o.stops} stop${o.stops > 1 ? "s" : ""}`;
+        const viaLabel = o.via.length > 0 ? `via ${o.via.join(" · ")}` : null;
+        const dayShift = dayDelta(o.departureTime, o.arrivalTime);
+
+        return (
+          <button
+            key={o.offerId}
+            className={`airline-chip ${selected === i ? "selected" : ""}`}
+            onClick={() => onSelect(i)}
+            type="button"
+          >
+            {o.isCheapest && <span className="badge">Best value</span>}
+
+            <span
+              className="logo"
+              style={
+                o.carrierLogo
+                  ? { backgroundImage: `url(${o.carrierLogo})` }
+                  : undefined
+              }
+              aria-hidden
+            />
+
+            <span className="carrier-block">
+              <span className="nm">{o.carrierName}</span>
+              <span className="fn">
+                {o.carrierCode} · {o.flightNumber}
+              </span>
+            </span>
+
+            <span className="times-block">
+              <span className="tt">
+                {fmtClock(o.departureTime)} → {fmtClock(o.arrivalTime)}
+                {dayShift > 0 && (
+                  <span className="next-day">+{dayShift}d</span>
+                )}
+              </span>
+              {viaLabel && <span className="via">{viaLabel}</span>}
+            </span>
+
+            <span className="stat">{fmtDuration(o.durationMinutes)}</span>
+
+            <span className={`stat ${o.stops > 0 ? "muted" : ""}`}>
+              {stopsLabel}
+            </span>
+
+            <span className="pr">
+              {fmtUSD(o.price)}
+              <small>{o.currency}</small>
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
+}
+
+function dayDelta(depISO: string, arrISO: string): number {
+  const dep = depISO.split("T")[0];
+  const arr = arrISO.split("T")[0];
+  if (!dep || !arr) return 0;
+  const depD = new Date(dep + "T00:00:00Z").getTime();
+  const arrD = new Date(arr + "T00:00:00Z").getTime();
+  return Math.round((arrD - depD) / (24 * 3600 * 1000));
 }

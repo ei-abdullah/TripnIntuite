@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import {useEffect, useMemo, useState} from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { orderedPicks, useTripStore } from "../lib/tripStore";
-import { AIRLINES_BY_DEST } from "../lib/data";
-import { legDateRanges, HOME_AIRPORT } from "../lib/schedule";
-import { fmtDateLong, fmtRange } from "../lib/dates";
+import {useRouter} from "next/navigation";
+import {orderedPicks, useTripStore} from "../lib/tripStore";
+import {legDateRanges} from "../lib/schedule";
+import {fmtDateLong, fmtISO, fmtRange} from "../lib/dates";
+import {type FlightOption, getFlightsForLeg} from "../lib/api";
 import LegCard from "../components/LegCard";
 import ReturnFlightCard from "../components/ReturnFlightCard";
 
@@ -16,10 +16,19 @@ export default function TripPage() {
   const picksRecord = useTripStore((s) => s.picks);
   const departure = useTripStore((s) => s.departure);
   const days = useTripStore((s) => s.days);
+  const departureAirport = useTripStore((s) => s.departureAirport);
 
   const picks = useMemo(
     () => orderedPicks(intuitions, picksRecord),
     [intuitions, picksRecord],
+  );
+
+  // null = still loading, [] = loaded with zero results
+  const [flightsPerLeg, setFlightsPerLeg] = useState<(FlightOption[] | null)[]>(
+    [],
+  );
+  const [returnFlights, setReturnFlights] = useState<FlightOption[] | null>(
+    null,
   );
 
   useEffect(() => {
@@ -36,9 +45,52 @@ export default function TripPage() {
     }
   }, [intuitions.length, picks.length, days.length, router]);
 
+  const homeIata = departureAirport?.iataCode ?? null;
+  const ranges = useMemo(
+    () =>
+      picks.length === days.length ? legDateRanges(departure, picks, days) : [],
+    [departure, picks, days],
+  );
+
+  // Kick off N parallel flight fetches when ready. Each leg fills its own slot
+  // as it resolves — progressive rendering.
+  useEffect(() => {
+    if (!homeIata || picks.length === 0 || ranges.length === 0) return;
+
+    // Seed N+1 null slots — N legs + return
+    setFlightsPerLeg(picks.map(() => null));
+    setReturnFlights(null);
+
+    picks.forEach((p, i) => {
+      const from = i === 0 ? homeIata : picks[i - 1].airport;
+      const to = p.airport;
+      const date = fmtISO(ranges[i].arrive);
+      getFlightsForLeg(from, to, date)
+        .then((res) => {
+          setFlightsPerLeg((prev) => {
+            const next = [...prev];
+            next[i] = res.options;
+            return next;
+          });
+        })
+        .catch(() => {
+          setFlightsPerLeg((prev) => {
+            const next = [...prev];
+            next[i] = [];
+            return next;
+          });
+        });
+    });
+
+    const last = picks[picks.length - 1];
+    const lastRange = ranges[ranges.length - 1];
+    getFlightsForLeg(last.airport, homeIata, fmtISO(lastRange.leave))
+      .then((res) => setReturnFlights(res.options))
+      .catch(() => setReturnFlights([]));
+  }, [homeIata, picks, ranges]);
+
   if (picks.length === 0 || days.length !== picks.length) return null;
 
-  const ranges = legDateRanges(departure, picks, days);
   const lastPick = picks[picks.length - 1];
   const lastRange = ranges[ranges.length - 1];
 
@@ -62,14 +114,26 @@ export default function TripPage() {
         </div>
       </div>
 
+      {!homeIata && (
+        <div
+          style={{
+            padding: "16px 0",
+            color: "var(--accent)",
+            fontSize: 12,
+            textTransform: "uppercase",
+            letterSpacing: "0.2em",
+          }}
+        >
+          Detect your home airport on the home page to load flights.
+        </div>
+      )}
+
       <div style={{ paddingTop: 32 }}>
         {picks.map((p, i) => {
           const prev = i === 0 ? null : picks[i - 1];
-          const from = i === 0 ? HOME_AIRPORT : prev!.airport;
+          const from = i === 0 ? homeIata ?? "—" : prev!.airport;
           const to = p.airport;
           const flightDate = ranges[i].arrive;
-          const airlines =
-            AIRLINES_BY_DEST[p.id] || AIRLINES_BY_DEST.tromso;
           return (
             <LegCard
               key={p.id}
@@ -79,7 +143,7 @@ export default function TripPage() {
               to={to}
               dateRange={fmtRange(ranges[i].arrive, ranges[i].leave)}
               flightDateLabel={fmtDateLong(flightDate)}
-              airlines={airlines}
+              flights={flightsPerLeg[i] ?? null}
               idx={i}
               total={picks.length}
             />
@@ -88,11 +152,9 @@ export default function TripPage() {
 
         <ReturnFlightCard
           from={lastPick.airport}
-          to={HOME_AIRPORT}
+          to={homeIata ?? "—"}
           dateLabel={fmtDateLong(lastRange.leave)}
-          airlines={
-            AIRLINES_BY_DEST[lastPick.id] || AIRLINES_BY_DEST.tromso
-          }
+          flights={returnFlights}
         />
 
         <div

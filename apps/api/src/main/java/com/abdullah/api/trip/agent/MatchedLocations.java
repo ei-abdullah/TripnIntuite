@@ -1,6 +1,7 @@
-package com.abdullah.api.model.prompt;
+package com.abdullah.api.trip.agent;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
 import java.util.List;
 
 public record MatchedLocations(

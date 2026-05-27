@@ -1,3 +1,18 @@
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+
+google:
+  maps:
+    api-key: ${GOOGLE_MAPS_API_KEY}
+
+liteapi:
+  key: ${LiteAPI_API_KEY}
+  base-url: https://api.liteapi.travel
+
+security:
+  jwt:
+    secret-key: ${JWT_SECRET_KEY}
+
 spring:
   application:
     name: api
@@ -15,6 +30,19 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SUPPORT_EMAIL}
+    password: ${APP_PASSWORD}
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
 
   jackson:
     default-property-inclusion: non_null

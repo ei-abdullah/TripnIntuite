@@ -1,8 +1,12 @@
-import type { AirlineOption, Destination } from "../lib/data";
-import { HOTELS } from "../lib/data";
+"use client";
+
+import {useState} from "react";
+import type {Destination} from "../lib/data";
+import {HOTELS} from "../lib/data";
+import type {FlightOption} from "../lib/api";
 import FlightSummary from "./FlightSummary";
 import AirlineChips from "./AirlineChips";
-import { fmtUSD } from "../lib/dates";
+import {fmtDuration, fmtUSD} from "../lib/dates";
 
 export default function LegCard({
   leg,
@@ -11,7 +15,7 @@ export default function LegCard({
   to,
   dateRange,
   flightDateLabel,
-  airlines,
+  flights,
   idx,
   total,
 }: {
@@ -21,11 +25,18 @@ export default function LegCard({
   to: string;
   dateRange: string;
   flightDateLabel: string;
-  airlines: AirlineOption[];
+  flights: FlightOption[] | null;
   idx: number;
   total: number;
 }) {
   const hotels = HOTELS[leg.id] || [];
+  const [sel, setSel] = useState(0);
+  const selectedFlight =
+    flights && flights.length > 0 ? flights[Math.min(sel, flights.length - 1)] : null;
+  const headlineDur = selectedFlight
+    ? fmtDuration(selectedFlight.durationMinutes)
+    : "…";
+
   return (
     <article className="leg-card">
       <div className="leg-card-head">
@@ -53,8 +64,23 @@ export default function LegCard({
               </span>{" "}
               <span style={{ marginLeft: "auto" }}>{flightDateLabel}</span>
             </div>
-            <FlightSummary from={from} to={to} dur={airlines[0].dur} />
-            <AirlineChips options={airlines} />
+            <FlightSummary
+              from={from}
+              to={to}
+              dur={headlineDur}
+              via={selectedFlight?.via ?? []}
+              depTime={selectedFlight?.departureTime}
+              arrTime={selectedFlight?.arrivalTime}
+            />
+            {flights === null ? (
+              <FlightsSkeleton />
+            ) : (
+              <AirlineChips
+                options={flights}
+                selected={sel}
+                onSelect={setSel}
+              />
+            )}
           </div>
 
           <div className="leg-section">
@@ -122,5 +148,30 @@ export default function LegCard({
         </div>
       </div>
     </article>
+  );
+}
+
+function FlightsSkeleton() {
+  return (
+    <div className="airline-chips" style={{ opacity: 0.55 }}>
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="airline-chip"
+          style={{
+            color: "var(--muted-2)",
+            cursor: "default",
+            background:
+              "linear-gradient(90deg, transparent, var(--rule) 50%, transparent)",
+            backgroundSize: "200% 100%",
+            animation: "shimmer 1.4s ease-in-out infinite",
+          }}
+        >
+          <span className="nm">Searching…</span>
+          <span className="du">—</span>
+          <span className="pr">—</span>
+        </div>
+      ))}
+    </div>
   );
 }

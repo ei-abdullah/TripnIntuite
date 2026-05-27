@@ -1,6 +1,6 @@
-import { Fragment } from "react";
-import type { Destination } from "../lib/data";
-import type { Intuition } from "../lib/api";
+import {Fragment} from "react";
+import type {Destination} from "../lib/data";
+import type {Intuition} from "../lib/api";
 
 export default function LegStepper({
   groups,
