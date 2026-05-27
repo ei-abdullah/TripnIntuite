@@ -167,6 +167,12 @@ function toIntuition(segment: BackendSegmentWithLocations, idx: number): Intuiti
   };
 }
 
+export type ViaPoint = {
+  code: string;
+  latitude: number;
+  longitude: number;
+};
+
 export type FlightOption = {
   offerId: string;
   carrierCode: string;
@@ -177,10 +183,14 @@ export type FlightOption = {
   arrivalTime: string;
   durationMinutes: number;
   stops: number;
-  via: string[];
+  via: ViaPoint[];
   price: number;
   currency: string;
   isCheapest: boolean;
+  originLat: number;
+  originLng: number;
+  destinationLat: number;
+  destinationLng: number;
 };
 
 export type LegResult = {

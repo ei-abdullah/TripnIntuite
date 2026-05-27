@@ -1,7 +1,10 @@
 package com.abdullah.api.trip;
 
+import com.abdullah.api.trip.dto.Airport;
 import com.abdullah.api.trip.dto.FlightOptionDto;
+import com.abdullah.api.trip.dto.FlightOptionDto.ViaPoint;
 import com.abdullah.api.trip.dto.LegResultDto;
+import com.abdullah.api.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,7 +13,6 @@ import org.springframework.web.client.RestClient;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.IntStream;
 
 @Service
 public class FlightSearchService {
@@ -19,12 +21,14 @@ public class FlightSearchService {
     private static final int TOP_N = 8;
 
     private final RestClient restClient;
+    private final Utils utils;
 
     @Value("${liteapi.key}")
     private String apiKey;
 
-    public FlightSearchService(RestClient.Builder builder, @Value("${liteapi.base-url}") String baseUrl) {
+    public FlightSearchService(RestClient.Builder builder, @Value("${liteapi.base-url}") String baseUrl, Utils utils) {
         this.restClient = builder.baseUrl(baseUrl).build();
+        this.utils = utils;
     }
 
     public LegResultDto searchOneLeg(String origin, String destination, String date) {
@@ -58,7 +62,7 @@ public class FlightSearchService {
         List<FlightOptionDto> options = journeys.stream()
                 .sorted(Comparator.comparingDouble(j -> j.cheapestOffer().pricing().display().total()))
                 .limit(TOP_N)
-                .map(FlightSearchService::toFlightOption)
+                .map(this::toFlightOption)
                 .toList();
 
         log.info("Flight search {} -> {} on {}: {} journeys returned, top {} in {}ms",
@@ -68,16 +72,27 @@ public class FlightSearchService {
         return new LegResultDto(origin, destination, date, options);
     }
 
-    private static FlightOptionDto toFlightOption(Journey j) {
+    private FlightOptionDto toFlightOption(Journey j) {
         List<Segment> segs = j.segments();
         Segment first = segs.getFirst();
+        Segment last = segs.getLast();
         int stops = segs.size() - 1;
 
-        List<String> via = stops == 0
+        // ViaPoints = intermediate destinations (all segment.destinationCodes except the last one)
+        List<ViaPoint> via = stops == 0
                 ? List.of()
-                : IntStream.range(0, segs.size() - 1)
-                        .mapToObj(i -> segs.get(i).destinationCode())
+                : segs.subList(0, segs.size() - 1).stream()
+                        .map(s -> lookupAirport(s.destinationCode()))
+                        .filter(java.util.Objects::nonNull)
+                        .map(a -> new ViaPoint(a.iataCode(), a.latitude(), a.longitude()))
                         .toList();
+
+        Airport originAp = lookupAirport(first.originCode());
+        Airport destAp = lookupAirport(last.destinationCode());
+        double originLat = originAp != null ? originAp.latitude() : 0.0;
+        double originLng = originAp != null ? originAp.longitude() : 0.0;
+        double destLat = destAp != null ? destAp.latitude() : 0.0;
+        double destLng = destAp != null ? destAp.longitude() : 0.0;
 
         return new FlightOptionDto(
                 j.cheapestOffer().offerId(),
@@ -86,14 +101,27 @@ public class FlightSearchService {
                 first.carrier().marketingLogo(),
                 first.flight().marketingNumber(),
                 first.departureTime(),
-                segs.getLast().arrivalTime(),
+                last.arrivalTime(),
                 j.totalDuration().minutes(),
                 stops,
                 via,
                 j.cheapestOffer().pricing().display().total(),
                 j.cheapestOffer().pricing().display().currency(),
-                j.isCheapest()
+                j.isCheapest(),
+                originLat,
+                originLng,
+                destLat,
+                destLng
         );
+    }
+
+    private Airport lookupAirport(String iata) {
+        try {
+            return utils.findAirportByIata(iata);
+        } catch (Exception e) {
+            log.warn("Airport lookup failed for {}: {}", iata, e.getMessage());
+            return null;
+        }
     }
 
     // ── request ───────────────────────────────

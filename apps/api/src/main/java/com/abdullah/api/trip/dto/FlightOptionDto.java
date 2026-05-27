@@ -12,8 +12,14 @@ public record FlightOptionDto(
         String arrivalTime,
         int durationMinutes,
         int stops,
-        List<String> via,
+        List<ViaPoint> via,
         double price,
         String currency,
-        boolean isCheapest
-) {}
+        boolean isCheapest,
+        double originLat,
+        double originLng,
+        double destinationLat,
+        double destinationLng
+) {
+    public record ViaPoint(String code, double latitude, double longitude) {}
+}

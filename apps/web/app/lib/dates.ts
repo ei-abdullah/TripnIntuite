@@ -61,3 +61,15 @@ export function fmtClock(iso: string): string {
   if (!t) return iso;
   return t.slice(0, 5);
 }
+
+export function fmtChipDate(iso: string): string {
+  const datePart = iso.split("T")[0];
+  if (!datePart) return iso;
+  const d = new Date(datePart + "T00:00:00Z");
+  return d.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}

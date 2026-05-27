@@ -1,7 +1,7 @@
 "use client";
 
 import type {FlightOption} from "../lib/api";
-import {fmtClock, fmtDuration, fmtUSD} from "../lib/dates";
+import {fmtChipDate, fmtClock, fmtDuration, fmtUSD} from "../lib/dates";
 
 export default function AirlineChips({
   options,
@@ -27,7 +27,8 @@ export default function AirlineChips({
       {options.map((o, i) => {
         const stopsLabel =
           o.stops === 0 ? "Direct" : `${o.stops} stop${o.stops > 1 ? "s" : ""}`;
-        const viaLabel = o.via.length > 0 ? `via ${o.via.join(" · ")}` : null;
+        const viaLabel =
+          o.via.length > 0 ? ` · via ${o.via.map((v) => v.code).join("/")}` : "";
         const dayShift = dayDelta(o.departureTime, o.arrivalTime);
 
         return (
@@ -49,27 +50,23 @@ export default function AirlineChips({
               aria-hidden
             />
 
-            <span className="carrier-block">
-              <span className="nm">{o.carrierName}</span>
-              <span className="fn">
-                {o.carrierCode} · {o.flightNumber}
+            <span className="stack">
+              <span className="primary">{o.carrierName}</span>
+              <span className="meta">
+                {o.carrierCode} {o.flightNumber} · {fmtChipDate(o.departureTime)}
               </span>
             </span>
 
-            <span className="times-block">
-              <span className="tt">
+            <span className="stack">
+              <span className="primary serif">
                 {fmtClock(o.departureTime)} → {fmtClock(o.arrivalTime)}
                 {dayShift > 0 && (
                   <span className="next-day">+{dayShift}d</span>
                 )}
               </span>
-              {viaLabel && <span className="via">{viaLabel}</span>}
-            </span>
-
-            <span className="stat">{fmtDuration(o.durationMinutes)}</span>
-
-            <span className={`stat ${o.stops > 0 ? "muted" : ""}`}>
-              {stopsLabel}
+              <span className="meta">
+                {fmtDuration(o.durationMinutes)} · {stopsLabel}{viaLabel}
+              </span>
             </span>
 
             <span className="pr">
