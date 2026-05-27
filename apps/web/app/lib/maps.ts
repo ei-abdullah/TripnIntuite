@@ -116,8 +116,8 @@ export function flightPathMapUrl({
   origin,
   destination,
   via,
-  width = 720,
-  height = 400,
+  width = 640,
+  height = 220,
 }: {
   origin: LatLng;
   destination: LatLng;

@@ -1,13 +1,14 @@
 "use client";
 
-import {useState} from "react";
-import type {Destination} from "../lib/data";
-import {HOTELS} from "../lib/data";
-import type {FlightOption} from "../lib/api";
+import { useState } from "react";
+import type { Destination, Hotel } from "../lib/data";
+import { HOTELS } from "../lib/data";
+import type { FlightOption } from "../lib/api";
 import FlightSummary from "./FlightSummary";
 import AirlineChips from "./AirlineChips";
+import HotelChips from "./HotelChips";
 import MapTabs from "./MapTabs";
-import {fmtDuration, fmtUSD} from "../lib/dates";
+import { fmtDuration } from "../lib/dates";
 
 export default function LegCard({
   leg,
@@ -30,10 +31,16 @@ export default function LegCard({
   idx: number;
   total: number;
 }) {
-  const hotels = HOTELS[leg.id] || [];
+  const hotels: Hotel[] = HOTELS[leg.id] || [];
   const [sel, setSel] = useState(0);
+  const [hotelSel, setHotelSel] = useState(0);
+
   const selectedFlight =
-    flights && flights.length > 0 ? flights[Math.min(sel, flights.length - 1)] : null;
+    flights && flights.length > 0
+      ? flights[Math.min(sel, flights.length - 1)]
+      : null;
+  const selectedHotel =
+    hotels.length > 0 ? hotels[Math.min(hotelSel, hotels.length - 1)] : null;
   const headlineDur = selectedFlight
     ? fmtDuration(selectedFlight.durationMinutes)
     : "…";
@@ -54,7 +61,16 @@ export default function LegCard({
       </div>
 
       <div className="leg-body">
-        <div>
+        <FlightSummary
+          from={from}
+          to={to}
+          dur={headlineDur}
+          via={selectedFlight?.via.map((v) => v.code) ?? []}
+          depTime={selectedFlight?.departureTime}
+          arrTime={selectedFlight?.arrivalTime}
+        />
+
+        <div className="leg-chips-grid">
           <div className="leg-section">
             <div className="title">
               <strong>Flight</strong>{" "}
@@ -65,14 +81,6 @@ export default function LegCard({
               </span>{" "}
               <span style={{ marginLeft: "auto" }}>{flightDateLabel}</span>
             </div>
-            <FlightSummary
-              from={from}
-              to={to}
-              dur={headlineDur}
-              via={selectedFlight?.via.map((v) => v.code) ?? []}
-              depTime={selectedFlight?.departureTime}
-              arrTime={selectedFlight?.arrivalTime}
-            />
             {flights === null ? (
               <FlightsSkeleton />
             ) : (
@@ -86,49 +94,34 @@ export default function LegCard({
 
           <div className="leg-section">
             <div className="title">
-              <strong>Hotels</strong>{" "}
-              <span>vetted picks from Booking.com</span>
+              <strong>Hotels</strong> <span>vetted picks</span>
             </div>
-            {hotels.map((h, i) => (
-              <div key={i} className="hotel-row">
-                <div>
-                  <div className="nm serif">{h.name}</div>
-                  <div className="meta">
-                    {"★".repeat(h.stars)}
-                    {"☆".repeat(5 - h.stars)} · {h.reviews.toLocaleString()}{" "}
-                    reviews
-                  </div>
-                </div>
-                <div className="score">
-                  <div className="v num">{h.score.toFixed(1)}</div>
-                  <small>Review</small>
-                </div>
-                <div className="price">
-                  <div className="amt num">{fmtUSD(h.price)}</div>
-                  <small>per night</small>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="leg-section">
-            <div className="title">
-              <strong>Sites to visit</strong>{" "}
-              <span>recommended by TripIntuition</span>
-            </div>
-            <div className="sites-chips">
-              {leg.sites.map((s, i) => (
-                <span key={i} className="site-chip">
-                  {s}
-                </span>
-              ))}
-            </div>
+            <HotelChips
+              hotels={hotels}
+              selected={hotelSel}
+              onSelect={setHotelSel}
+            />
           </div>
         </div>
 
-        <div>
-          <div className="leg-section">
-            <MapTabs selectedFlight={selectedFlight} />
+        <div className="leg-section">
+          <MapTabs
+            selectedFlight={selectedFlight}
+            selectedHotel={selectedHotel}
+          />
+        </div>
+
+        <div className="leg-section">
+          <div className="title">
+            <strong>Sites to visit</strong>{" "}
+            <span>recommended by TripIntuition</span>
+          </div>
+          <div className="sites-chips">
+            {leg.sites.map((s, i) => (
+              <span key={i} className="site-chip">
+                {s}
+              </span>
+            ))}
           </div>
         </div>
       </div>
@@ -152,8 +145,15 @@ function FlightsSkeleton() {
             animation: "shimmer 1.4s ease-in-out infinite",
           }}
         >
-          <span className="nm">Searching…</span>
-          <span className="du">—</span>
+          <span className="logo" />
+          <span className="stack">
+            <span className="primary">Searching…</span>
+            <span className="meta">—</span>
+          </span>
+          <span className="stack">
+            <span className="primary serif">—</span>
+            <span className="meta">—</span>
+          </span>
           <span className="pr">—</span>
         </div>
       ))}

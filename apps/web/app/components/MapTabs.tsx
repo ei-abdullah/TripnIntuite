@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import type { FlightOption } from "../lib/api";
-import { flightPathMapUrl } from "../lib/maps";
-import { fmtDuration } from "../lib/dates";
+import type { Hotel } from "../lib/data";
+import { fmtDuration, fmtUSD } from "../lib/dates";
+import FlightSVGMap from "./FlightSVGMap";
 
 type Tab = "flight" | "hotels";
 
 export default function MapTabs({
   selectedFlight,
+  selectedHotel,
 }: {
   selectedFlight: FlightOption | null;
+  selectedHotel: Hotel | null;
 }) {
   const [tab, setTab] = useState<Tab>("flight");
 
@@ -37,7 +40,7 @@ export default function MapTabs({
         {tab === "flight" ? (
           <FlightPathPane flight={selectedFlight} />
         ) : (
-          <HotelsPlaceholder />
+          <HotelsPlaceholder hotel={selectedHotel} />
         )}
       </div>
     </div>
@@ -53,27 +56,25 @@ function FlightPathPane({ flight }: { flight: FlightOption | null }) {
     );
   }
 
-  const url = flightPathMapUrl({
-    origin: { lat: flight.originLat, lng: flight.originLng },
-    destination: { lat: flight.destinationLat, lng: flight.destinationLng },
-    via: flight.via.map((v) => ({ lat: v.latitude, lng: v.longitude })),
-  });
-
   const stopsLabel =
     flight.stops === 0
       ? "Direct"
       : `${flight.stops} stop${flight.stops > 1 ? "s" : ""}`;
   const viaLabel =
-    flight.via.length > 0 ? ` · via ${flight.via.map((v) => v.code).join(" · ")}` : "";
+    flight.via.length > 0
+      ? ` · via ${flight.via.map((v) => v.code).join(" · ")}`
+      : "";
 
   return (
     <>
-      <div className="map-block">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={url}
-          alt={`Flight path from ${flight.carrierCode} ${flight.flightNumber}`}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+      <div className="map-block svg-map">
+        <FlightSVGMap
+          origin={{ lat: flight.originLat, lng: flight.originLng }}
+          destination={{
+            lat: flight.destinationLat,
+            lng: flight.destinationLng,
+          }}
+          via={flight.via.map((v) => ({ lat: v.latitude, lng: v.longitude }))}
         />
       </div>
       <div className="map-foot">
@@ -87,16 +88,17 @@ function FlightPathPane({ flight }: { flight: FlightOption | null }) {
   );
 }
 
-function HotelsPlaceholder() {
+function HotelsPlaceholder({ hotel }: { hotel: Hotel | null }) {
   return (
     <>
       <div className="map-block">
         <div className="map-empty">
-          Real hotels coming soon — once the hotels API is wired up.
+          Hotel map coming with real-API integration.
         </div>
       </div>
       <div className="map-foot">
-        <span>Hotels integration pending</span>
+        <span>{hotel ? hotel.name : "No hotel selected"}</span>
+        <span>{hotel ? `${fmtUSD(hotel.price)} / night` : ""}</span>
       </div>
     </>
   );
