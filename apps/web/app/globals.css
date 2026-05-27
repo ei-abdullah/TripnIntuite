@@ -420,13 +420,13 @@ img { display: block; max-width: 100%; }
 }
 .flight-summary .ap.right { text-align: right; }
 
-.airline-chips { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.airline-chips { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .airline-chip {
   display: grid;
-  grid-template-columns: 40px minmax(150px, 1.2fr) minmax(120px, 1fr) 80px 80px 100px;
-  gap: 16px;
+  grid-template-columns: 22px minmax(160px, 1.3fr) minmax(190px, 1.2fr) auto;
+  gap: 32px;
   align-items: center;
-  padding: 14px 18px;
+  padding: 18px 24px;
   border: 1px solid var(--rule-strong);
   background: transparent;
   font-size: 12px;
@@ -436,71 +436,62 @@ img { display: block; max-width: 100%; }
   position: relative;
   width: 100%;
 }
-.airline-chip:hover { border-color: var(--ink); background: var(--surface); }
-.airline-chip.selected { border-color: var(--accent); background: var(--surface); }
+.airline-chip:hover { border-color: var(--ink); }
+.airline-chip.selected {
+  border-color: var(--accent); background: var(--surface);
+}
 .airline-chip.selected::before {
-  content: ""; position: absolute; left: -1px; top: -1px; bottom: -1px; width: 3px;
+  content: ""; position: absolute; left: -1px; top: -1px; bottom: -1px; width: 2px;
   background: var(--accent);
 }
 .airline-chip .logo {
-  width: 32px; height: 32px;
+  width: 20px; height: 20px;
   background-size: contain; background-repeat: no-repeat; background-position: center;
-  background-color: var(--bg);
-  border-radius: 4px;
 }
-.airline-chip .carrier-block { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.airline-chip .carrier-block .nm {
-  font-weight: 500; color: var(--ink);
+.airline-chip .stack { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.airline-chip .stack .primary {
+  color: var(--ink); font-weight: 500; font-size: 13px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.airline-chip .carrier-block .fn {
-  font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.14em;
-}
-.airline-chip .times-block { display: flex; flex-direction: column; gap: 2px; }
-.airline-chip .times-block .tt {
-  font-family: var(--serif); font-size: 18px; color: var(--ink); line-height: 1; letter-spacing: -0.01em;
+.airline-chip .stack .primary.serif {
+  font-family: var(--serif); font-weight: 400; font-size: 17px; letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
 }
-.airline-chip .times-block .next-day {
-  font-size: 10px; color: var(--accent); margin-left: 4px; font-family: var(--sans);
+.airline-chip .stack .meta {
+  font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.2em;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
 }
-.airline-chip .times-block .via {
-  font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.14em;
+.airline-chip .next-day {
+  font-size: 10px; color: var(--accent); margin-left: 6px;
+  letter-spacing: 0.05em; vertical-align: super; font-family: var(--sans);
 }
-.airline-chip .stat {
-  font-size: 11.5px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.14em;
-  font-variant-numeric: tabular-nums;
-}
-.airline-chip .stat.muted { color: var(--muted); }
 .airline-chip .pr {
   text-align: right;
-  font-family: var(--serif); font-size: 22px; color: var(--ink); letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums; line-height: 1;
+  font-family: var(--serif); font-size: 22px; color: var(--ink);
+  letter-spacing: -0.01em; font-variant-numeric: tabular-nums; line-height: 1;
 }
 .airline-chip .pr small {
   display: block; font-family: var(--sans); font-size: 9.5px; color: var(--muted);
-  text-transform: uppercase; letter-spacing: 0.18em; margin-top: 4px;
+  text-transform: uppercase; letter-spacing: 0.22em; margin-top: 6px; font-weight: 500;
 }
 .airline-chip .badge {
-  position: absolute; top: -8px; right: 12px;
+  position: absolute; top: -9px; right: 18px;
   background: var(--accent); color: var(--accent-ink);
-  font-size: 9px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 500;
-  padding: 3px 8px;
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 500;
+  padding: 3px 10px;
 }
-@media (max-width: 880px) {
+@media (max-width: 980px) {
   .airline-chip {
-    grid-template-columns: 32px 1fr auto;
+    grid-template-columns: 20px 1fr auto;
     grid-template-areas:
       "logo carrier  price"
-      "logo times    times"
-      "logo stats    stats";
-    row-gap: 6px;
+      "logo times    times";
+    gap: 16px 20px;
   }
   .airline-chip .logo { grid-area: logo; }
-  .airline-chip .carrier-block { grid-area: carrier; }
-  .airline-chip .times-block { grid-area: times; }
+  .airline-chip .stack:nth-of-type(1) { grid-area: carrier; }
+  .airline-chip .stack:nth-of-type(2) { grid-area: times; }
   .airline-chip .pr { grid-area: price; }
-  .airline-chip .stat-row { grid-area: stats; display: flex; gap: 12px; }
 }
 
 .hotel-row {
@@ -551,6 +542,34 @@ img { display: block; max-width: 100%; }
   background: var(--bg); padding: 4px 10px;
 }
 .map-foot { display: flex; justify-content: space-between; padding: 12px 0 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted); }
+
+.map-tabs { display: flex; flex-direction: column; }
+.map-tabs-head {
+  display: flex; gap: 24px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 14px;
+}
+.map-tab {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 500;
+  color: var(--muted-2);
+  padding: 0 0 12px;
+  background: transparent; border: 0; cursor: pointer;
+  position: relative;
+  transition: color .2s ease;
+}
+.map-tab:hover { color: var(--ink-2); }
+.map-tab.active { color: var(--ink); }
+.map-tab.active::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+  background: var(--ink);
+}
+.map-tabs-body .map-block { background: var(--bg); overflow: hidden; }
+.map-tabs-body .map-block .map-empty {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 24px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--muted);
+}
 
 .return-card {
   margin-top: 64px;

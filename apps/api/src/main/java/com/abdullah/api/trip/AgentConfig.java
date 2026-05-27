@@ -65,6 +65,7 @@ public class AgentConfig {
                         """)
                 .defaultOptions(AnthropicChatOptions.builder()
                         .model("claude-sonnet-4-6")
+                        .temperature(0.9)
                 )
                 .build();
     }

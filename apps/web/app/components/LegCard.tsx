@@ -6,6 +6,7 @@ import {HOTELS} from "../lib/data";
 import type {FlightOption} from "../lib/api";
 import FlightSummary from "./FlightSummary";
 import AirlineChips from "./AirlineChips";
+import MapTabs from "./MapTabs";
 import {fmtDuration, fmtUSD} from "../lib/dates";
 
 export default function LegCard({
@@ -68,7 +69,7 @@ export default function LegCard({
               from={from}
               to={to}
               dur={headlineDur}
-              via={selectedFlight?.via ?? []}
+              via={selectedFlight?.via.map((v) => v.code) ?? []}
               depTime={selectedFlight?.departureTime}
               arrTime={selectedFlight?.arrivalTime}
             />
@@ -127,23 +128,7 @@ export default function LegCard({
 
         <div>
           <div className="leg-section">
-            <div className="title">
-              <strong>Map</strong>{" "}
-              <span>
-                {leg.nearest}, {leg.country}
-              </span>
-            </div>
-            <div className="map-block">
-              <div className="map-pin">
-                <div className="pin"></div>
-                <div className="pin-base"></div>
-                <div className="pin-label serif">{leg.name}</div>
-              </div>
-            </div>
-            <div className="map-foot">
-              <span>Lat / long indicative</span>
-              <span>{leg.tz.replace("_", " ")}</span>
-            </div>
+            <MapTabs selectedFlight={selectedFlight} />
           </div>
         </div>
       </div>

@@ -45,7 +45,7 @@ export default function ReturnFlightCard({
               from={from}
               to={to}
               dur={headlineDur}
-              via={selectedFlight?.via ?? []}
+              via={selectedFlight?.via.map((v) => v.code) ?? []}
               depTime={selectedFlight?.departureTime}
               arrTime={selectedFlight?.arrivalTime}
             />

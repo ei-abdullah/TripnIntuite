@@ -1,5 +1,6 @@
 package com.abdullah.api.utils;
 
+import com.abdullah.api.trip.dto.Airport;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import org.springframework.core.io.ClassPathResource;
@@ -48,5 +49,26 @@ public class Utils {
 
             return bestIata;
         }
+    }
+
+    public Airport findAirportByIata(String iata) throws IOException, CsvValidationException {
+        if (iata == null || iata.isBlank()) return null;
+        try (CSVReader reader = new CSVReader(new InputStreamReader(
+                new ClassPathResource("filtered_airports.csv").getInputStream()
+        ))) {
+            reader.readNext();
+            String[] row;
+            while ((row = reader.readNext()) != null) {
+                if (iata.equalsIgnoreCase(row[13])) {
+                    return new Airport(
+                            row[13],
+                            row[3],
+                            Double.parseDouble(row[4]),
+                            Double.parseDouble(row[5])
+                    );
+                }
+            }
+        }
+        return null;
     }
 }
