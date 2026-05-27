@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { parsePrompt, getNearestAirport, ApiError, type Intuition } from "./lib/api";
-import { useTripStore } from "./lib/tripStore";
-import { useAuthStore } from "./lib/authStore";
+import {useEffect, useRef, useState} from "react";
+import {useRouter} from "next/navigation";
+import {ApiError, getNearestAirport, type Intuition, parsePrompt} from "./lib/api";
+import {useTripStore} from "./lib/tripStore";
+import {useAuthStore} from "./lib/authStore";
 import AgentConsole from "./components/AgentConsole";
 
 const DEMO_PROMPT =
@@ -149,6 +149,10 @@ export default function HomePage() {
             <span style={{ color: "var(--rule-strong)" }}>·</span>
             {departureAirport ? (
               <>
+                <span style={{ color: "var(--ink)", fontWeight: 600 }}>
+                  {departureAirport.iataCode}
+                </span>
+                <span style={{ color: "var(--rule-strong)" }}>·</span>
                 <span style={{ color: "var(--ink)" }}>{departureAirport.name}</span>
                 <button
                   onClick={() => { setDepartureAirport(null); setLocState("idle"); }}

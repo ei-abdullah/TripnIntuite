@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import {useEffect} from "react";
+import {usePathname} from "next/navigation";
 import Header from "./Header";
 import Footer from "./Footer";
-import { useAuthStore } from "../lib/authStore";
-import { getMe, ApiError } from "../lib/api";
+import {useAuthStore} from "../lib/authStore";
+import {ApiError, getMe} from "../lib/api";
 
 const SCREEN_LABELS: Record<string, string> = {
   "/": "01 Home",

@@ -43,7 +43,10 @@ public class SecurityConfig {
                                 "/api/v1/auth/signup",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/signup/verify",
-                                "/api/trip/nearest-airport"
+                                "/api/trip/nearest-airport",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
                         )
                         .permitAll()
                         .anyRequest().authenticated()

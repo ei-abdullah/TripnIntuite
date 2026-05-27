@@ -1,5 +1,5 @@
-import { Destination } from "./data";
-import { useAuthStore } from "./authStore";
+import {Destination} from "./data";
+import {useAuthStore} from "./authStore";
 
 // ----------------------------------------------------------------
 // Shared types (mirror backend DTOs)
@@ -167,9 +167,49 @@ function toIntuition(segment: BackendSegmentWithLocations, idx: number): Intuiti
   };
 }
 
+export type FlightOption = {
+  offerId: string;
+  carrierCode: string;
+  carrierName: string;
+  carrierLogo: string;
+  flightNumber: string;
+  departureTime: string;
+  arrivalTime: string;
+  durationMinutes: number;
+  stops: number;
+  via: string[];
+  price: number;
+  currency: string;
+  isCheapest: boolean;
+};
+
+export type LegResult = {
+  origin: string;
+  destination: string;
+  date: string;
+  options: FlightOption[];
+};
+
+export async function getFlightsForLeg(
+  origin: string,
+  destination: string,
+  date: string,
+): Promise<LegResult> {
+  const res = await apiFetch(
+    `/api/trip/flights?origin=${origin}&destination=${destination}&date=${date}`,
+    { method: "GET" },
+  );
+  if (!res.ok) throw await readError(res);
+  return res.json();
+}
+
 export type NearestAirport = {
+  id: string;
   name: string;
   formattedAddress: string;
+  latitude: number;
+  longitude: number;
+  iataCode: string;
 };
 
 export async function getNearestAirport(lat: number, lng: number): Promise<NearestAirport> {

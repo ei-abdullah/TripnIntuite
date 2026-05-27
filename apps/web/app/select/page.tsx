@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import {useEffect} from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useTripStore } from "../lib/tripStore";
+import {useRouter} from "next/navigation";
+import {useTripStore} from "../lib/tripStore";
 import LegStepper from "../components/LegStepper";
 
 export default function SelectPage() {
@@ -77,6 +77,16 @@ export default function SelectPage() {
                   <h4 className="serif">{c.name}</h4>
                   <div className="city">
                     {c.country} · nearest city {c.nearest}
+                  </div>
+                  <div
+                    className="city"
+                    style={{
+                      marginTop: "4px",
+                      color: "var(--ink-2)",
+                      fontWeight: 500,
+                    }}
+                  >
+                    ✈ {c.airport}
                   </div>
                   <p className="why">{c.blurb}</p>
                   <span className="select-pill">

@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { PAST, img } from "../lib/data";
-import { useTripStore } from "../lib/tripStore";
+import {useRouter} from "next/navigation";
+import {img, PAST} from "../lib/data";
+import {useTripStore} from "../lib/tripStore";
 
 export default function PastPage() {
   const router = useRouter();

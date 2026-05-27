@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { useAuthStore } from "../lib/authStore";
-import { logout } from "../lib/api";
+import {usePathname, useRouter} from "next/navigation";
+import {useEffect, useRef, useState} from "react";
+import {useAuthStore} from "../lib/authStore";
+import {logout} from "../lib/api";
 
 export default function Header() {
   const pathname = usePathname();

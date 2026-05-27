@@ -5,7 +5,6 @@ public record NearestAirportDto(
         String name,
         String formattedAddress,
         double latitude,
-        double longitude
-        ) {
-
-}
+        double longitude,
+        String iataCode
+) {}

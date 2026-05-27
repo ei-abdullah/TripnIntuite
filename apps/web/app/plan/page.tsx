@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import {useEffect, useMemo} from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { orderedPicks, useTripStore } from "../lib/tripStore";
-import { buildSchedule, HOME_AIRPORT } from "../lib/schedule";
-import { fmtDateLong } from "../lib/dates";
+import {useRouter} from "next/navigation";
+import {orderedPicks, useTripStore} from "../lib/tripStore";
+import {buildSchedule, HOME_AIRPORT} from "../lib/schedule";
+import {fmtDateLong} from "../lib/dates";
 
 export default function PlanPage() {
   const router = useRouter();

@@ -1,5 +1,5 @@
-import type { Destination } from "./data";
-import { addDays, parseDate } from "./dates";
+import type {Destination} from "./data";
+import {addDays, parseDate} from "./dates";
 
 export type ScheduleEvent = {
   type: "fly" | "arrive" | "home";

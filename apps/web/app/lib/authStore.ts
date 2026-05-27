@@ -1,6 +1,6 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { UserDto } from "./api";
+import {create} from "zustand";
+import {persist} from "zustand/middleware";
+import type {UserDto} from "./api";
 
 type AuthState = {
   token: string | null;

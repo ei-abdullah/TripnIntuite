@@ -1,9 +1,9 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { login, signup, ApiError } from "../lib/api";
-import { useAuthStore } from "../lib/authStore";
+import {FormEvent, useEffect, useState} from "react";
+import {useRouter, useSearchParams} from "next/navigation";
+import {ApiError, login, signup} from "../lib/api";
+import {useAuthStore} from "../lib/authStore";
 
 type Mode = "login" | "signup";
 
