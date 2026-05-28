@@ -117,6 +117,7 @@ export default function LegCard({
             destination={{ lat: leg.latitude, lng: leg.longitude }}
             hotels={hotels ?? []}
             hotelSelectedIdx={hotelSel}
+            onHotelSelect={setHotelSel}
           />
         </div>
 

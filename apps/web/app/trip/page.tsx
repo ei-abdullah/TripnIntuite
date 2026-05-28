@@ -7,8 +7,11 @@ import {orderedPicks, useTripStore} from "../lib/tripStore";
 import {legDateRanges} from "../lib/schedule";
 import {fmtDateLong, fmtISO, fmtRange} from "../lib/dates";
 import {type FlightOption, getFlightsForLeg, getHotelsForLeg, type HotelOption} from "../lib/api";
+import {APIProvider} from "@vis.gl/react-google-maps";
 import LegCard from "../components/LegCard";
 import ReturnFlightCard from "../components/ReturnFlightCard";
+
+const MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "";
 
 export default function TripPage() {
   const router = useRouter();
@@ -118,6 +121,7 @@ export default function TripPage() {
   const lastRange = ranges[ranges.length - 1];
 
   return (
+    <APIProvider apiKey={MAPS_KEY}>
     <main className="container fade-in">
       <div className="page-head">
         <div>
@@ -196,5 +200,6 @@ export default function TripPage() {
         </div>
       </div>
     </main>
+    </APIProvider>
   );
 }

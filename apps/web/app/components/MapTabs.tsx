@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { FlightOption, HotelOption } from "../lib/api";
 import { fmtDuration } from "../lib/dates";
 import FlightSVGMap from "./FlightSVGMap";
-import HotelSVGMap from "./HotelSVGMap";
+import HotelGoogleMap from "./HotelGoogleMap";
 
 type Tab = "flight" | "hotels";
 
@@ -14,12 +14,14 @@ export default function MapTabs({
   destination,
   hotels,
   hotelSelectedIdx,
+  onHotelSelect,
 }: {
   selectedFlight: FlightOption | null;
   selectedHotel: HotelOption | null;
   destination: { lat: number; lng: number };
   hotels: HotelOption[];
   hotelSelectedIdx: number;
+  onHotelSelect: (index: number) => void;
 }) {
   const [tab, setTab] = useState<Tab>("flight");
 
@@ -51,6 +53,7 @@ export default function MapTabs({
             hotels={hotels}
             selectedIdx={hotelSelectedIdx}
             selectedHotel={selectedHotel}
+            onSelect={onHotelSelect}
           />
         )}
       </div>
@@ -104,11 +107,13 @@ function HotelsPane({
   hotels,
   selectedIdx,
   selectedHotel,
+  onSelect,
 }: {
   destination: { lat: number; lng: number };
   hotels: HotelOption[];
   selectedIdx: number;
   selectedHotel: HotelOption | null;
+  onSelect: (index: number) => void;
 }) {
   if (hotels.length === 0) {
     return (
@@ -126,11 +131,12 @@ function HotelsPane({
 
   return (
     <>
-      <div className="map-block svg-map">
-        <HotelSVGMap
+      <div className="map-block">
+        <HotelGoogleMap
           destination={destination}
           hotels={hotels}
           selectedIdx={selectedIdx}
+          onSelect={onSelect}
         />
       </div>
       <div className="map-foot">
