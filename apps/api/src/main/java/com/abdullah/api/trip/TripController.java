@@ -1,5 +1,6 @@
 package com.abdullah.api.trip;
 
+import com.abdullah.api.trip.dto.HotelResultDto;
 import com.abdullah.api.trip.dto.LegResultDto;
 import com.abdullah.api.trip.dto.NearestAirportDto;
 import com.abdullah.api.trip.dto.ParseRequest;
@@ -17,15 +18,18 @@ public class TripController {
     private final CoordinatorService coordinator;
     private final NearestAirportService nearestAirport;
     private final FlightSearchService flightSearch;
+    private final HotelSearchService hotelSearch;
 
     public TripController(
             CoordinatorService coordinator,
             NearestAirportService nearestAirport,
-            FlightSearchService flightSearch
+            FlightSearchService flightSearch,
+            HotelSearchService hotelSearch
     ) {
         this.coordinator = coordinator;
         this.nearestAirport = nearestAirport;
         this.flightSearch = flightSearch;
+        this.hotelSearch = hotelSearch;
     }
 
     @PostMapping("/parse")
@@ -52,6 +56,15 @@ public class TripController {
             @RequestParam String date
     ) {
         return flightSearch.searchOneLeg(origin, destination, date);
+    }
+
+    @GetMapping("/hotels")
+    public HotelResultDto hotels(
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam(defaultValue = "25000") int radius
+    ) {
+        return hotelSearch.searchHotels(lat, lng, radius);
     }
 
     @GetMapping("/health")

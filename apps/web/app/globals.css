@@ -526,14 +526,10 @@ img { display: block; max-width: 100%; }
 
 .map-block {
   aspect-ratio: 3 / 1;
-  background: var(--surface);
+  background: var(--bg);
   border: 1px solid var(--rule);
   position: relative;
   overflow: hidden;
-  background-image:
-    linear-gradient(var(--rule) 1px, transparent 1px),
-    linear-gradient(90deg, var(--rule) 1px, transparent 1px);
-  background-size: 32px 32px;
 }
 .map-pin {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -100%);
@@ -570,13 +566,7 @@ img { display: block; max-width: 100%; }
   content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
   background: var(--ink);
 }
-.map-tabs-body .map-block { background: var(--bg); overflow: hidden; }
-.map-tabs-body .map-block.svg-map {
-  background: var(--bg);
-  background-image: none;
-  border-color: var(--rule);
-}
-.map-tabs-body .map-block.svg-map svg { background: var(--bg); }
+.map-block.svg-map svg { background: var(--bg); }
 .map-tabs-body .map-block .map-empty {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;

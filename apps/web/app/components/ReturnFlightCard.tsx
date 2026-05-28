@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { FlightOption } from "../lib/api";
 import FlightSummary from "./FlightSummary";
 import AirlineChips from "./AirlineChips";
-import MapTabs from "./MapTabs";
+import FlightSVGMap from "./FlightSVGMap";
 import { fmtDuration } from "../lib/dates";
 
 export default function ReturnFlightCard({
@@ -79,9 +79,35 @@ export default function ReturnFlightCard({
           )}
         </div>
 
-        <div className="leg-section">
-          <MapTabs selectedFlight={selectedFlight} selectedHotel={null} />
-        </div>
+        {selectedFlight && (
+          <div className="leg-section">
+            <div className="map-block svg-map">
+              <FlightSVGMap
+                origin={{
+                  lat: selectedFlight.originLat,
+                  lng: selectedFlight.originLng,
+                }}
+                destination={{
+                  lat: selectedFlight.destinationLat,
+                  lng: selectedFlight.destinationLng,
+                }}
+                via={selectedFlight.via.map((v) => ({
+                  lat: v.latitude,
+                  lng: v.longitude,
+                }))}
+              />
+            </div>
+            <div className="map-foot">
+              <span>
+                {selectedFlight.carrierCode} {selectedFlight.flightNumber}
+                {selectedFlight.stops === 0
+                  ? " · Direct"
+                  : ` · ${selectedFlight.stops} stop${selectedFlight.stops > 1 ? "s" : ""}`}
+              </span>
+              <span>{fmtDuration(selectedFlight.durationMinutes)}</span>
+            </div>
+          </div>
+        )}
       </div>
     </article>
   );

@@ -215,6 +215,43 @@ export async function getFlightsForLeg(
   return res.json();
 }
 
+export type HotelOption = {
+  id: string;
+  name: string;
+  description: string;
+  chain: string;
+  address: string;
+  city: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  mainPhoto: string;
+  thumbnail: string;
+  stars: number;
+  rating: number;
+  reviewCount: number;
+};
+
+export type HotelResult = {
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+  hotels: HotelOption[];
+};
+
+export async function getHotelsForLeg(
+  lat: number,
+  lng: number,
+  radiusMeters = 25000,
+): Promise<HotelResult> {
+  const res = await apiFetch(
+    `/api/trip/hotels?lat=${lat}&lng=${lng}&radius=${radiusMeters}`,
+    { method: "GET" },
+  );
+  if (!res.ok) throw await readError(res);
+  return res.json();
+}
+
 export type NearestAirport = {
   id: string;
   name: string;

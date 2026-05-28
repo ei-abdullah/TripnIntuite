@@ -1,19 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import type { FlightOption } from "../lib/api";
-import type { Hotel } from "../lib/data";
-import { fmtDuration, fmtUSD } from "../lib/dates";
+import type { FlightOption, HotelOption } from "../lib/api";
+import { fmtDuration } from "../lib/dates";
 import FlightSVGMap from "./FlightSVGMap";
+import HotelSVGMap from "./HotelSVGMap";
 
 type Tab = "flight" | "hotels";
 
 export default function MapTabs({
   selectedFlight,
   selectedHotel,
+  destination,
+  hotels,
+  hotelSelectedIdx,
 }: {
   selectedFlight: FlightOption | null;
-  selectedHotel: Hotel | null;
+  selectedHotel: HotelOption | null;
+  destination: { lat: number; lng: number };
+  hotels: HotelOption[];
+  hotelSelectedIdx: number;
 }) {
   const [tab, setTab] = useState<Tab>("flight");
 
@@ -40,7 +46,12 @@ export default function MapTabs({
         {tab === "flight" ? (
           <FlightPathPane flight={selectedFlight} />
         ) : (
-          <HotelsPlaceholder hotel={selectedHotel} />
+          <HotelsPane
+            destination={destination}
+            hotels={hotels}
+            selectedIdx={hotelSelectedIdx}
+            selectedHotel={selectedHotel}
+          />
         )}
       </div>
     </div>
@@ -88,17 +99,51 @@ function FlightPathPane({ flight }: { flight: FlightOption | null }) {
   );
 }
 
-function HotelsPlaceholder({ hotel }: { hotel: Hotel | null }) {
+function HotelsPane({
+  destination,
+  hotels,
+  selectedIdx,
+  selectedHotel,
+}: {
+  destination: { lat: number; lng: number };
+  hotels: HotelOption[];
+  selectedIdx: number;
+  selectedHotel: HotelOption | null;
+}) {
+  if (hotels.length === 0) {
+    return (
+      <>
+        <div className="map-block">
+          <div className="map-empty">No hotels found in this area.</div>
+        </div>
+        <div className="map-foot">
+          <span>—</span>
+          <span></span>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
-      <div className="map-block">
-        <div className="map-empty">
-          Hotel map coming with real-API integration.
-        </div>
+      <div className="map-block svg-map">
+        <HotelSVGMap
+          destination={destination}
+          hotels={hotels}
+          selectedIdx={selectedIdx}
+        />
       </div>
       <div className="map-foot">
-        <span>{hotel ? hotel.name : "No hotel selected"}</span>
-        <span>{hotel ? `${fmtUSD(hotel.price)} / night` : ""}</span>
+        <span>
+          {selectedHotel
+            ? `${selectedHotel.name} · ${selectedHotel.city || selectedHotel.country}`
+            : `${hotels.length} hotels near destination`}
+        </span>
+        <span>
+          {selectedHotel
+            ? `${selectedHotel.rating.toFixed(1)} / 10 · ${selectedHotel.reviewCount.toLocaleString()} reviews`
+            : ""}
+        </span>
       </div>
     </>
   );
