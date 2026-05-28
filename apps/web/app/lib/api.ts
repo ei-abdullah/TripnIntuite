@@ -154,6 +154,8 @@ function toCard(loc: BackendMatchedLocation, keywords: string[]): CardWithMatch 
     themes: keywords,
     sites: [],
     tz: "UTC",
+    latitude: loc.latitude,
+    longitude: loc.longitude,
     match: Math.round(loc.matchScore * 100),
   };
 }

@@ -12,7 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class FlightSearchService {
@@ -26,7 +29,11 @@ public class FlightSearchService {
     @Value("${liteapi.key}")
     private String apiKey;
 
-    public FlightSearchService(RestClient.Builder builder, @Value("${liteapi.base-url}") String baseUrl, Utils utils) {
+    public FlightSearchService(
+            RestClient.Builder builder,
+            @Value("${liteapi.base-url}") String baseUrl,
+            Utils utils
+    ) {
         this.restClient = builder.baseUrl(baseUrl).build();
         this.utils = utils;
     }
@@ -59,14 +66,26 @@ public class FlightSearchService {
             return new LegResultDto(origin, destination, date, List.of());
         }
 
-        List<FlightOptionDto> options = journeys.stream()
+        // LiteAPI returns one journey per fare class — same physical flight repeated
+        // across Economy Lite / Classic / Flex etc. Dedupe by flight signature
+        // (every segment's carrier + flight number + departure time), keeping the
+        // cheapest fare variant in each group.
+        Map<String, Journey> bySignature = journeys.stream()
+                .collect(Collectors.toMap(
+                        this::flightSignature,
+                        j -> j,
+                        (a, b) -> a.cheapestOffer().pricing().display().total()
+                                <= b.cheapestOffer().pricing().display().total() ? a : b,
+                        LinkedHashMap::new));
+
+        List<FlightOptionDto> options = bySignature.values().stream()
                 .sorted(Comparator.comparingDouble(j -> j.cheapestOffer().pricing().display().total()))
                 .limit(TOP_N)
                 .map(this::toFlightOption)
                 .toList();
 
-        log.info("Flight search {} -> {} on {}: {} journeys returned, top {} in {}ms",
-                origin, destination, date, journeys.size(), options.size(),
+        log.info("Flight search {} -> {} on {}: {} journeys returned ({} unique), top {} in {}ms",
+                origin, destination, date, journeys.size(), bySignature.size(), options.size(),
                 System.currentTimeMillis() - t0);
 
         return new LegResultDto(origin, destination, date, options);
@@ -113,6 +132,12 @@ public class FlightSearchService {
                 destLat,
                 destLng
         );
+    }
+
+    private String flightSignature(Journey j) {
+        return j.segments().stream()
+                .map(s -> s.carrier().marketingCode() + s.flight().marketingNumber() + "@" + s.departureTime())
+                .collect(Collectors.joining("|"));
     }
 
     private Airport lookupAirport(String iata) {

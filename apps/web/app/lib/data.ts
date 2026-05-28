@@ -9,6 +9,8 @@ export type Destination = {
   themes: string[];
   sites: string[];
   tz: string;
+  latitude: number;
+  longitude: number;
 };
 
 export type Hotel = {

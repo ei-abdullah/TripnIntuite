@@ -130,3 +130,66 @@ Content-Type: application/json
 
 
 ###
+
+
+# curl --request POST
+#     --url https://api.liteapi.travel/v3.0/hotels/rates
+#     --header 'X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953'
+#     --header 'accept: application/json'
+#     --header 'content-type: application/json'
+#     --data '
+#{
+#  "occupancies": [
+#    {
+#      "adults": 2
+#    }
+#  ],
+#  "currency": "USD",
+#  "guestNationality": "PK",
+#  "checkin": "2026-07-01",
+#  "checkout": "2026-07-02",
+#  "latitude": 34.052235,
+#  "longitude": -118.243683,
+#  "radius": 5000,
+#  "aiSearch": "Romantic getaway with Italian vibes in London near the London Eye",
+#  "limit": 3
+#}
+#'
+POST https://api.liteapi.travel/v3.0/hotels/rates
+X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953
+accept: application/json
+Content-Type: application/json
+
+
+{
+  "occupancies": [
+    {
+      "adults": 2
+    }
+  ],
+  "currency": "USD",
+  "guestNationality": "PK",
+  "checkin": "2026-07-01",
+  "checkout": "2026-07-02",
+  "latitude": 34.052235,
+  "longitude": -118.243683,
+  "radius": 5000,
+  "aiSearch": "Romantic getaway with Italian vibes in London near the London Eye",
+  "limit": 3,
+  "includeHotelData": true
+}
+
+
+###
+
+
+# curl --request GET
+#     --url 'https://api.liteapi.travel/v3.0/data/hotels?limit=10&longitude=-115.16988&latitude=36.1251&radius=10000&minRating=8.6'
+#     --header 'X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953'
+#     --header 'accept: application/json'
+GET https://api.liteapi.travel/v3.0/data/hotels?limit=10&longitude=-115.16988&latitude=36.1251&radius=10000&
+    minRating=8.6
+X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953
+accept: application/json
+
+###
