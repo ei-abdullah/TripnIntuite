@@ -6,9 +6,12 @@ import {useRouter} from "next/navigation";
 import {orderedPicks, useTripStore} from "../lib/tripStore";
 import {legDateRanges} from "../lib/schedule";
 import {fmtDateLong, fmtISO, fmtRange} from "../lib/dates";
-import {type FlightOption, getFlightsForLeg} from "../lib/api";
+import {type FlightOption, getFlightsForLeg, getHotelsForLeg, type HotelOption} from "../lib/api";
+import {APIProvider} from "@vis.gl/react-google-maps";
 import LegCard from "../components/LegCard";
 import ReturnFlightCard from "../components/ReturnFlightCard";
+
+const MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "";
 
 export default function TripPage() {
   const router = useRouter();
@@ -25,6 +28,9 @@ export default function TripPage() {
 
   // null = still loading, [] = loaded with zero results
   const [flightsPerLeg, setFlightsPerLeg] = useState<(FlightOption[] | null)[]>(
+    [],
+  );
+  const [hotelsPerLeg, setHotelsPerLeg] = useState<(HotelOption[] | null)[]>(
     [],
   );
   const [returnFlights, setReturnFlights] = useState<FlightOption[] | null>(
@@ -53,33 +59,30 @@ export default function TripPage() {
   );
 
   // Kick off N parallel flight fetches when ready. Each leg fills its own slot
-  // as it resolves — progressive rendering.
+  // as it resolves — progressive rendering. resizeSlot handles the case where
+  // picks length has changed since the previous run.
   useEffect(() => {
     if (!homeIata || picks.length === 0 || ranges.length === 0) return;
 
-    // Seed N+1 null slots — N legs + return
-    setFlightsPerLeg(picks.map(() => null));
-    setReturnFlights(null);
+    const expectedLength = picks.length;
+    const resizeSlot = (
+      prev: (FlightOption[] | null)[],
+      i: number,
+      value: FlightOption[],
+    ) => {
+      const next =
+        prev.length === expectedLength ? [...prev] : Array(expectedLength).fill(null);
+      next[i] = value;
+      return next;
+    };
 
     picks.forEach((p, i) => {
       const from = i === 0 ? homeIata : picks[i - 1].airport;
       const to = p.airport;
       const date = fmtISO(ranges[i].arrive);
       getFlightsForLeg(from, to, date)
-        .then((res) => {
-          setFlightsPerLeg((prev) => {
-            const next = [...prev];
-            next[i] = res.options;
-            return next;
-          });
-        })
-        .catch(() => {
-          setFlightsPerLeg((prev) => {
-            const next = [...prev];
-            next[i] = [];
-            return next;
-          });
-        });
+        .then((res) => setFlightsPerLeg((prev) => resizeSlot(prev, i, res.options)))
+        .catch(() => setFlightsPerLeg((prev) => resizeSlot(prev, i, [])));
     });
 
     const last = picks[picks.length - 1];
@@ -89,12 +92,42 @@ export default function TripPage() {
       .catch(() => setReturnFlights([]));
   }, [homeIata, picks, ranges]);
 
+  // Hotels fan-out: one date-aware fetch per leg (availability + price for the
+  // leg's check-in/check-out window).
+  useEffect(() => {
+    if (picks.length === 0 || ranges.length === 0) return;
+
+    const expectedLength = picks.length;
+    const resizeSlot = (
+      prev: (HotelOption[] | null)[],
+      i: number,
+      value: HotelOption[],
+    ) => {
+      const next =
+        prev.length === expectedLength ? [...prev] : Array(expectedLength).fill(null);
+      next[i] = value;
+      return next;
+    };
+
+    picks.forEach((p, i) => {
+      getHotelsForLeg(
+        p.latitude,
+        p.longitude,
+        fmtISO(ranges[i].arrive),
+        fmtISO(ranges[i].leave),
+      )
+        .then((res) => setHotelsPerLeg((prev) => resizeSlot(prev, i, res.hotels)))
+        .catch(() => setHotelsPerLeg((prev) => resizeSlot(prev, i, [])));
+    });
+  }, [picks, ranges]);
+
   if (picks.length === 0 || days.length !== picks.length) return null;
 
   const lastPick = picks[picks.length - 1];
   const lastRange = ranges[ranges.length - 1];
 
   return (
+    <APIProvider apiKey={MAPS_KEY}>
     <main className="container fade-in">
       <div className="page-head">
         <div>
@@ -143,7 +176,10 @@ export default function TripPage() {
               to={to}
               dateRange={fmtRange(ranges[i].arrive, ranges[i].leave)}
               flightDateLabel={fmtDateLong(flightDate)}
+              checkinISO={fmtISO(ranges[i].arrive)}
+              checkoutISO={fmtISO(ranges[i].leave)}
               flights={flightsPerLeg[i] ?? null}
+              hotels={hotelsPerLeg[i] ?? null}
               idx={i}
               total={picks.length}
             />
@@ -172,5 +208,6 @@ export default function TripPage() {
         </div>
       </div>
     </main>
+    </APIProvider>
   );
 }

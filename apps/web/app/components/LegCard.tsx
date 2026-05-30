@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import type { Destination, Hotel } from "../lib/data";
-import { HOTELS } from "../lib/data";
-import type { FlightOption } from "../lib/api";
+import type { Destination } from "../lib/data";
+import type { FlightOption, HotelOption } from "../lib/api";
 import FlightSummary from "./FlightSummary";
 import AirlineChips from "./AirlineChips";
 import HotelChips from "./HotelChips";
+import HotelDrawer from "./HotelDrawer";
 import MapTabs from "./MapTabs";
 import { fmtDuration } from "../lib/dates";
 
@@ -17,7 +17,10 @@ export default function LegCard({
   to,
   dateRange,
   flightDateLabel,
+  checkinISO,
+  checkoutISO,
   flights,
+  hotels,
   idx,
   total,
 }: {
@@ -27,20 +30,28 @@ export default function LegCard({
   to: string;
   dateRange: string;
   flightDateLabel: string;
+  checkinISO: string;
+  checkoutISO: string;
   flights: FlightOption[] | null;
+  hotels: HotelOption[] | null;
   idx: number;
   total: number;
 }) {
-  const hotels: Hotel[] = HOTELS[leg.id] || [];
   const [sel, setSel] = useState(0);
   const [hotelSel, setHotelSel] = useState(0);
+  const [detailIdx, setDetailIdx] = useState<number | null>(null);
+
+  const detailHotel =
+    detailIdx !== null && hotels && hotels[detailIdx] ? hotels[detailIdx] : null;
 
   const selectedFlight =
     flights && flights.length > 0
       ? flights[Math.min(sel, flights.length - 1)]
       : null;
   const selectedHotel =
-    hotels.length > 0 ? hotels[Math.min(hotelSel, hotels.length - 1)] : null;
+    hotels && hotels.length > 0
+      ? hotels[Math.min(hotelSel, hotels.length - 1)]
+      : null;
   const headlineDur = selectedFlight
     ? fmtDuration(selectedFlight.durationMinutes)
     : "…";
@@ -96,11 +107,16 @@ export default function LegCard({
             <div className="title">
               <strong>Hotels</strong> <span>vetted picks</span>
             </div>
-            <HotelChips
-              hotels={hotels}
-              selected={hotelSel}
-              onSelect={setHotelSel}
-            />
+            {hotels === null ? (
+              <HotelsSkeleton />
+            ) : (
+              <HotelChips
+                hotels={hotels}
+                selected={hotelSel}
+                onSelect={setHotelSel}
+                onViewDetails={setDetailIdx}
+              />
+            )}
           </div>
         </div>
 
@@ -108,6 +124,10 @@ export default function LegCard({
           <MapTabs
             selectedFlight={selectedFlight}
             selectedHotel={selectedHotel}
+            destination={{ lat: leg.latitude, lng: leg.longitude }}
+            hotels={hotels ?? []}
+            hotelSelectedIdx={hotelSel}
+            onHotelSelect={setHotelSel}
           />
         </div>
 
@@ -125,7 +145,46 @@ export default function LegCard({
           </div>
         </div>
       </div>
+
+      <HotelDrawer
+        hotel={detailHotel}
+        checkin={checkinISO}
+        checkout={checkoutISO}
+        onClose={() => setDetailIdx(null)}
+      />
     </article>
+  );
+}
+
+function HotelsSkeleton() {
+  return (
+    <div className="airline-chips" style={{ opacity: 0.55 }}>
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="airline-chip"
+          style={{
+            color: "var(--muted-2)",
+            cursor: "default",
+            background:
+              "linear-gradient(90deg, transparent, var(--rule) 50%, transparent)",
+            backgroundSize: "200% 100%",
+            animation: "shimmer 1.4s ease-in-out infinite",
+          }}
+        >
+          <span className="logo" />
+          <span className="stack">
+            <span className="primary">Searching hotels…</span>
+            <span className="meta">—</span>
+          </span>
+          <span className="stack">
+            <span className="primary serif">—</span>
+            <span className="meta">—</span>
+          </span>
+          <span className="pr">—</span>
+        </div>
+      ))}
+    </div>
   );
 }
 
