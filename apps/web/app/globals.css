@@ -42,7 +42,7 @@ img { display: block; max-width: 100%; }
 .mono    { font-family: var(--mono); }
 
 .shell { min-height: 100vh; display: flex; flex-direction: column; }
-.container { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 56px; }
+.container { width: 100%; max-width: 1440px; margin: 0 auto; padding: 0 56px; }
 @media (max-width: 720px) { .container { padding: 0 22px; } }
 
 .topbar { border-bottom: 1px solid var(--rule); background: var(--bg); position: sticky; top: 0; z-index: 30; }
@@ -389,7 +389,7 @@ img { display: block; max-width: 100%; }
 }
 .leg-chips-grid {
   display: grid; grid-template-columns: 1fr 1fr;
-  gap: 64px;
+  gap: 48px;
 }
 .leg-chips-grid > * { min-width: 0; }
 @media (max-width: 980px) {
@@ -431,8 +431,8 @@ img { display: block; max-width: 100%; }
 .airline-chips { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .airline-chip {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1.4fr) minmax(0, 1fr) auto;
-  gap: 18px;
+  grid-template-columns: 20px minmax(0, 1.5fr) minmax(0, 1fr) max-content;
+  gap: 16px;
   align-items: center;
   padding: 18px 20px;
   border: 1px solid var(--rule-strong);
