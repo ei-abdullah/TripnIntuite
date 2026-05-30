@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import static java.util.stream.IntStream.range;
+
 @Service
 public class CoordinatorService {
 
@@ -22,8 +24,8 @@ public class CoordinatorService {
     private final LocationFinderService locationFinder;
 
     public CoordinatorService(
-        @Qualifier("coordinatorAgent") ChatClient coordinator,
-        LocationFinderService locationFinder
+            @Qualifier("coordinatorAgent") ChatClient coordinator,
+            LocationFinderService locationFinder
     ) {
         this.coordinator = coordinator;
         this.locationFinder = locationFinder;
@@ -34,29 +36,33 @@ public class CoordinatorService {
         long t0 = System.currentTimeMillis();
 
         ParsedSegments parsed = coordinator.prompt()
-            .user(prompt)
-            .call()
-            .entity(ParsedSegments.class);
+                .user(prompt)
+                .call()
+                .entity(ParsedSegments.class);
 
         assert parsed != null;
         log.info("Coordinator returned {} segments in {}ms",
-            parsed.segments().size(), System.currentTimeMillis() - t0);
+                parsed.segments().size(), System.currentTimeMillis() - t0);
 
-        List<CompletableFuture<MatchedLocations>> futures = parsed.segments().stream()
-            .map(locationFinder::findForSegment)
-            .toList();
+        List<CompletableFuture<MatchedLocations>> futures = parsed
+                .segments()
+                .stream()
+                .map(locationFinder::findForSegment)
+                .toList();
 
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        CompletableFuture.allOf(
+                futures.toArray(new CompletableFuture[0])
+        ).join();
 
-        List<SegmentWithLocations> segments = java.util.stream.IntStream.range(0, parsed.segments().size())
-            .mapToObj(i -> SegmentWithLocations.of(
-                parsed.segments().get(i),
-                futures.get(i).join().locations()
-            ))
-            .toList();
+        List<SegmentWithLocations> segments = range(0, parsed.segments().size())
+                .mapToObj(i -> SegmentWithLocations.of(
+                        parsed.segments().get(i),
+                        futures.get(i).join().locations()
+                ))
+                .toList();
 
         log.info("Parse complete: {} segments, total time {}ms",
-            segments.size(), System.currentTimeMillis() - t0);
+                segments.size(), System.currentTimeMillis() - t0);
 
         return new ParseResponse(prompt, segments);
     }

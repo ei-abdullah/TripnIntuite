@@ -60,7 +60,7 @@ export default function TripPage() {
 
   // Kick off N parallel flight fetches when ready. Each leg fills its own slot
   // as it resolves — progressive rendering. resizeSlot handles the case where
-  // picks length changed since the previous run.
+  // picks length has changed since the previous run.
   useEffect(() => {
     if (!homeIata || picks.length === 0 || ranges.length === 0) return;
 
@@ -92,9 +92,10 @@ export default function TripPage() {
       .catch(() => setReturnFlights([]));
   }, [homeIata, picks, ranges]);
 
-  // Hotels fan-out: one fetch per leg, doesn't depend on homeIata or dates (v1).
+  // Hotels fan-out: one date-aware fetch per leg (availability + price for the
+  // leg's check-in/check-out window).
   useEffect(() => {
-    if (picks.length === 0) return;
+    if (picks.length === 0 || ranges.length === 0) return;
 
     const expectedLength = picks.length;
     const resizeSlot = (
@@ -109,11 +110,16 @@ export default function TripPage() {
     };
 
     picks.forEach((p, i) => {
-      getHotelsForLeg(p.latitude, p.longitude)
+      getHotelsForLeg(
+        p.latitude,
+        p.longitude,
+        fmtISO(ranges[i].arrive),
+        fmtISO(ranges[i].leave),
+      )
         .then((res) => setHotelsPerLeg((prev) => resizeSlot(prev, i, res.hotels)))
         .catch(() => setHotelsPerLeg((prev) => resizeSlot(prev, i, [])));
     });
-  }, [picks]);
+  }, [picks, ranges]);
 
   if (picks.length === 0 || days.length !== picks.length) return null;
 
@@ -170,6 +176,8 @@ export default function TripPage() {
               to={to}
               dateRange={fmtRange(ranges[i].arrive, ranges[i].leave)}
               flightDateLabel={fmtDateLong(flightDate)}
+              checkinISO={fmtISO(ranges[i].arrive)}
+              checkoutISO={fmtISO(ranges[i].leave)}
               flights={flightsPerLeg[i] ?? null}
               hotels={hotelsPerLeg[i] ?? null}
               idx={i}

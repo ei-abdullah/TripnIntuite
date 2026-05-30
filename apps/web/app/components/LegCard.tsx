@@ -6,6 +6,7 @@ import type { FlightOption, HotelOption } from "../lib/api";
 import FlightSummary from "./FlightSummary";
 import AirlineChips from "./AirlineChips";
 import HotelChips from "./HotelChips";
+import HotelDrawer from "./HotelDrawer";
 import MapTabs from "./MapTabs";
 import { fmtDuration } from "../lib/dates";
 
@@ -16,6 +17,8 @@ export default function LegCard({
   to,
   dateRange,
   flightDateLabel,
+  checkinISO,
+  checkoutISO,
   flights,
   hotels,
   idx,
@@ -27,6 +30,8 @@ export default function LegCard({
   to: string;
   dateRange: string;
   flightDateLabel: string;
+  checkinISO: string;
+  checkoutISO: string;
   flights: FlightOption[] | null;
   hotels: HotelOption[] | null;
   idx: number;
@@ -34,6 +39,10 @@ export default function LegCard({
 }) {
   const [sel, setSel] = useState(0);
   const [hotelSel, setHotelSel] = useState(0);
+  const [detailIdx, setDetailIdx] = useState<number | null>(null);
+
+  const detailHotel =
+    detailIdx !== null && hotels && hotels[detailIdx] ? hotels[detailIdx] : null;
 
   const selectedFlight =
     flights && flights.length > 0
@@ -105,6 +114,7 @@ export default function LegCard({
                 hotels={hotels}
                 selected={hotelSel}
                 onSelect={setHotelSel}
+                onViewDetails={setDetailIdx}
               />
             )}
           </div>
@@ -135,6 +145,13 @@ export default function LegCard({
           </div>
         </div>
       </div>
+
+      <HotelDrawer
+        hotel={detailHotel}
+        checkin={checkinISO}
+        checkout={checkoutISO}
+        onClose={() => setDetailIdx(null)}
+      />
     </article>
   );
 }

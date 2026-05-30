@@ -230,6 +230,10 @@ export type HotelOption = {
   stars: number;
   rating: number;
   reviewCount: number;
+  available: boolean;
+  totalPrice: number;
+  currency: string;
+  nights: number;
 };
 
 export type HotelResult = {
@@ -242,10 +246,48 @@ export type HotelResult = {
 export async function getHotelsForLeg(
   lat: number,
   lng: number,
+  checkin: string,
+  checkout: string,
   radiusMeters = 25000,
 ): Promise<HotelResult> {
   const res = await apiFetch(
-    `/api/trip/hotels?lat=${lat}&lng=${lng}&radius=${radiusMeters}`,
+    `/api/trip/hotels?lat=${lat}&lng=${lng}&checkin=${checkin}&checkout=${checkout}&radius=${radiusMeters}`,
+    { method: "GET" },
+  );
+  if (!res.ok) throw await readError(res);
+  return res.json();
+}
+
+export type RoomOffer = {
+  offerId: string;
+  name: string;
+  boardName: string;
+  totalAmount: number;
+  suggestedPrice: number;
+  currency: string;
+  refundable: boolean;
+  cancellationDeadline: string | null;
+  maxOccupancy: number;
+  perks: string[];
+};
+
+export type HotelRates = {
+  hotelId: string;
+  checkin: string;
+  checkout: string;
+  nights: number;
+  currency: string;
+  rooms: RoomOffer[];
+};
+
+export async function getHotelRates(
+  hotelId: string,
+  checkin: string,
+  checkout: string,
+  adults = 2,
+): Promise<HotelRates> {
+  const res = await apiFetch(
+    `/api/trip/hotels/${encodeURIComponent(hotelId)}/rates?checkin=${checkin}&checkout=${checkout}&adults=${adults}`,
     { method: "GET" },
   );
   if (!res.ok) throw await readError(res);

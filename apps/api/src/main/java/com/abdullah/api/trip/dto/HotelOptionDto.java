@@ -14,5 +14,11 @@ public record HotelOptionDto(
         String thumbnail,
         int stars,
         double rating,
-        int reviewCount
+        int reviewCount,
+        // Availability + cheapest price for the requested dates. When available
+        // is false the price fields are 0 (shown as "rates on request").
+        boolean available,
+        double totalPrice,
+        String currency,
+        int nights
 ) {}

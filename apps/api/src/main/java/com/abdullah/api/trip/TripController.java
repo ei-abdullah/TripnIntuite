@@ -1,5 +1,6 @@
 package com.abdullah.api.trip;
 
+import com.abdullah.api.trip.dto.HotelRatesDto;
 import com.abdullah.api.trip.dto.HotelResultDto;
 import com.abdullah.api.trip.dto.LegResultDto;
 import com.abdullah.api.trip.dto.NearestAirportDto;
@@ -62,9 +63,22 @@ public class TripController {
     public HotelResultDto hotels(
             @RequestParam double lat,
             @RequestParam double lng,
-            @RequestParam(defaultValue = "25000") int radius
+            @RequestParam String checkin,
+            @RequestParam String checkout,
+            @RequestParam(defaultValue = "25000") int radius,
+            @RequestParam(defaultValue = "2") int adults
     ) {
-        return hotelSearch.searchHotels(lat, lng, radius);
+        return hotelSearch.searchHotels(lat, lng, radius, checkin, checkout, adults);
+    }
+
+    @GetMapping("/hotels/{hotelId}/rates")
+    public HotelRatesDto hotelRates(
+            @PathVariable String hotelId,
+            @RequestParam String checkin,
+            @RequestParam String checkout,
+            @RequestParam(defaultValue = "2") int adults
+    ) {
+        return hotelSearch.fetchRates(hotelId, checkin, checkout, adults);
     }
 
     @GetMapping("/health")
