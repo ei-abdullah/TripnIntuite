@@ -162,6 +162,8 @@ export default function TripPage() {
             <Link href="/plan">Schedule</Link>
             <span className="sep">/</span>
             <span>Itinerary</span>
+            <span className="sep">/</span>
+            <Link href="/trips">My trips</Link>
           </div>
           <h2 className="serif">
             Your <em>itinerary</em>

@@ -8,7 +8,7 @@ export default function Footer() {
   return (
     <footer className="footer">
       <div className="container footer-inner">
-        <span>© 2026 TripIntuition</span>
+        <span>© 2026 Majestor</span>
         <span>
           Departing from{" "}
           <strong style={{ color: "var(--ink)" }}>

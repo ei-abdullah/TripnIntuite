@@ -49,10 +49,14 @@ export default function HomePage() {
     if (taRef.current) taRef.current.focus();
   }, []);
 
+  // Auto-detect the home airport once on mount. Deferred to a macrotask so the
+  // "detecting" state set inside detectLocation() isn't applied synchronously
+  // within the effect (which would trigger a cascading render). The timer is
+  // canceled on cleanup (StrictMode double-invoke / unmount).
   useEffect(() => {
-    if (!departureAirport && locState === "idle") {
-      detectLocation();
-    }
+    if (departureAirport || locState !== "idle") return;
+    const id = setTimeout(detectLocation, 0);
+    return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -93,10 +97,6 @@ export default function HomePage() {
       setError(msg);
       setRunning(false);
     }
-  };
-
-  const onConsoleDone = () => {
-    router.push("/select");
   };
 
   return (
@@ -216,10 +216,7 @@ export default function HomePage() {
           )}
 
           {running && localIntuitions.length > 0 && (
-            <AgentConsole
-              intuitions={localIntuitions}
-              onDone={onConsoleDone}
-            />
+            <AgentConsole intuitions={localIntuitions} doneHref="/select" />
           )}
 
           {error && (
