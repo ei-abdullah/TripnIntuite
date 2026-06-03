@@ -4,7 +4,7 @@ import {useEffect, useMemo} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {orderedPicks, useTripStore} from "../lib/tripStore";
-import {buildSchedule, HOME_AIRPORT} from "../lib/schedule";
+import {buildSchedule} from "../lib/schedule";
 import {fmtDateLong} from "../lib/dates";
 
 export default function PlanPage() {
@@ -13,6 +13,7 @@ export default function PlanPage() {
   const picksRecord = useTripStore((s) => s.picks);
   const departure = useTripStore((s) => s.departure);
   const days = useTripStore((s) => s.days);
+  const departureAirport = useTripStore((s) => s.departureAirport);
   const setDeparture = useTripStore((s) => s.setDeparture);
   const setDay = useTripStore((s) => s.setDay);
   const initDaysIfEmpty = useTripStore((s) => s.initDaysIfEmpty);
@@ -34,9 +35,10 @@ export default function PlanPage() {
     initDaysIfEmpty(picks.length);
   }, [intuitions.length, picks.length, router, initDaysIfEmpty]);
 
+  const homeIata = departureAirport?.iataCode ?? "home";
   const schedule = useMemo(
-    () => buildSchedule(departure, picks, days, HOME_AIRPORT),
-    [departure, picks, days],
+    () => buildSchedule(departure, picks, days, homeIata),
+    [departure, picks, days, homeIata],
   );
 
   if (picks.length === 0 || days.length !== picks.length) return null;
@@ -68,7 +70,7 @@ export default function PlanPage() {
           <div className="plan-head">
             <div className="lab">Departure</div>
             <h3 className="serif">
-              When do you leave <em>{HOME_AIRPORT}</em>?
+              When do you leave <em>{homeIata}</em>?
             </h3>
           </div>
           <div className="date-field">

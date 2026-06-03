@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Destination } from "../lib/data";
-import type { FlightOption, HotelOption } from "../lib/api";
+import type { FlightOption, HotelOption, PrebookResult } from "../lib/api";
 import FlightSummary from "./FlightSummary";
 import AirlineChips from "./AirlineChips";
 import HotelChips from "./HotelChips";
@@ -23,6 +23,11 @@ export default function LegCard({
   hotels,
   idx,
   total,
+  flightSel,
+  onFlightSel,
+  reservation,
+  onReserved,
+  onClearReservation,
 }: {
   leg: Destination;
   prevDest: Destination | null;
@@ -36,8 +41,15 @@ export default function LegCard({
   hotels: HotelOption[] | null;
   idx: number;
   total: number;
+  // Selected flight index, lifted to the trip page so checkout can read it.
+  flightSel: number;
+  onFlightSel: (index: number) => void;
+  // One reservation per leg, owned by the trip page. While set, every hotel in
+  // this leg is locked from opening details until the guest edits the booking.
+  reservation: { hotel: HotelOption; data: PrebookResult } | null;
+  onReserved: (hotel: HotelOption, data: PrebookResult) => void;
+  onClearReservation: () => void;
 }) {
-  const [sel, setSel] = useState(0);
   const [hotelSel, setHotelSel] = useState(0);
   const [detailIdx, setDetailIdx] = useState<number | null>(null);
 
@@ -46,7 +58,7 @@ export default function LegCard({
 
   const selectedFlight =
     flights && flights.length > 0
-      ? flights[Math.min(sel, flights.length - 1)]
+      ? flights[Math.min(flightSel, flights.length - 1)]
       : null;
   const selectedHotel =
     hotels && hotels.length > 0
@@ -97,8 +109,8 @@ export default function LegCard({
             ) : (
               <AirlineChips
                 options={flights}
-                selected={sel}
-                onSelect={setSel}
+                selected={flightSel}
+                onSelect={onFlightSel}
               />
             )}
           </div>
@@ -115,6 +127,8 @@ export default function LegCard({
                 selected={hotelSel}
                 onSelect={setHotelSel}
                 onViewDetails={setDetailIdx}
+                reservedHotelId={reservation?.hotel.id ?? null}
+                detailsLocked={reservation !== null}
               />
             )}
           </div>
@@ -125,8 +139,10 @@ export default function LegCard({
             selectedFlight={selectedFlight}
             selectedHotel={selectedHotel}
             destination={{ lat: leg.latitude, lng: leg.longitude }}
+            destinationName={leg.name}
             hotels={hotels ?? []}
             hotelSelectedIdx={hotelSel}
+            reservedHotelId={reservation?.hotel.id ?? null}
             onHotelSelect={setHotelSel}
           />
         </div>
@@ -150,6 +166,9 @@ export default function LegCard({
         hotel={detailHotel}
         checkin={checkinISO}
         checkout={checkoutISO}
+        reservation={reservation}
+        onReserved={(data) => detailHotel && onReserved(detailHotel, data)}
+        onClearReservation={onClearReservation}
         onClose={() => setDetailIdx(null)}
       />
     </article>

@@ -1,6 +1,8 @@
 package com.abdullah.api.trip;
 
 import com.abdullah.api.trip.dto.Airport;
+import com.abdullah.api.trip.dto.FlightBookRequest;
+import com.abdullah.api.trip.dto.FlightBookResultDto;
 import com.abdullah.api.trip.dto.FlightOptionDto;
 import com.abdullah.api.trip.dto.FlightOptionDto.ViaPoint;
 import com.abdullah.api.trip.dto.LegResultDto;
@@ -8,13 +10,16 @@ import com.abdullah.api.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,7 +71,7 @@ public class FlightSearchService {
             return new LegResultDto(origin, destination, date, List.of());
         }
 
-        // LiteAPI returns one journey per fare class — same physical flight repeated
+        // LiteAPI returns one journey per fare class — the same physical flight repeated
         // across Economy Lite / Classic / Flex etc. Dedupe by flight signature
         // (every segment's carrier + flight number + departure time), keeping the
         // cheapest fare variant in each group.
@@ -89,6 +94,33 @@ public class FlightSearchService {
                 System.currentTimeMillis() - t0);
 
         return new LegResultDto(origin, destination, date, options);
+    }
+
+    /**
+     * Book a flight. Simulated: LiteAPI flight booking is payment-gated (Stripe
+     * or an enabled credit line), which this sandbox account doesn't have. We
+     * synthesize a confirmation from the real selected offer so the trip can be
+     * completed end-to-end. To go live, replace the body with the real
+     * /v3.0/flights/prebooks + /v3.0/flights/bookings calls — the request shape
+     * (offerId + contact + passengers) already carries everything they need.
+     */
+    public FlightBookResultDto bookFlight(FlightBookRequest request) {
+        if (request == null || request.offerId() == null || request.offerId().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing flight offer.");
+        }
+        String bookingRef = "MJ-" + randomRef();
+        log.info("Flight booked (simulated): ref={} offer={}", bookingRef, request.offerId());
+        return new FlightBookResultDto(bookingRef, request.offerId(), "CONFIRMED", true);
+    }
+
+    // Short, human-friendly booking reference (no ambiguous chars like 0/O/1/I).
+    private static String randomRef() {
+        final String alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        StringBuilder sb = new StringBuilder(6);
+        for (int i = 0; i < 6; i++) {
+            sb.append(alphabet.charAt(ThreadLocalRandom.current().nextInt(alphabet.length())));
+        }
+        return sb.toString();
     }
 
     private FlightOptionDto toFlightOption(Journey j) {

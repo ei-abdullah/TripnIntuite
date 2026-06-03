@@ -1,19 +1,19 @@
 package com.abdullah.api.trip;
 
-import com.abdullah.api.trip.dto.HotelOptionDto;
-import com.abdullah.api.trip.dto.HotelRatesDto;
-import com.abdullah.api.trip.dto.HotelResultDto;
-import com.abdullah.api.trip.dto.RoomOfferDto;
+import com.abdullah.api.trip.dto.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,19 +30,25 @@ public class HotelSearchService {
     private static final int CANDIDATE_POOL = 25;
     private static final double MIN_RATING = 7.0;
     private static final int MAX_ROOMS = 6;
+    private static final int MAX_IMAGES = 20;
     private static final String DEFAULT_CURRENCY = "USD";
     private static final String DEFAULT_NATIONALITY = "US";
 
+    // Data + rates live on api.liteapi.travel; prebook/book live on the
+    // separate booking host (book.liteapi.travel).
     private final RestClient restClient;
+    private final RestClient bookClient;
 
     @Value("${liteapi.key}")
     private String apiKey;
 
     public HotelSearchService(
             RestClient.Builder builder,
-            @Value("${liteapi.base-url}") String baseUrl
+            @Value("${liteapi.base-url}") String baseUrl,
+            @Value("${liteapi.book-base-url}") String bookBaseUrl
     ) {
-        this.restClient = builder.baseUrl(baseUrl).build();
+        this.restClient = builder.clone().baseUrl(baseUrl).build();
+        this.bookClient = builder.clone().baseUrl(bookBaseUrl).build();
     }
 
     public HotelResultDto searchHotels(
@@ -79,10 +85,17 @@ public class HotelSearchService {
                 .limit(CANDIDATE_POOL)
                 .toList();
 
-        // hotelId -> cheapest offer for the dates. Empty if the rates call failed
+        // hotelId -> the cheapest offer for the dates. Empty if the rates call failed
         // or nothing is available; those hotels fall back to "rates on request".
         Map<String, OfferPrice> priceById = fetchAvailability(
-                candidates.stream().map(HotelDataItem::id).toList(), checkin, checkout, adults);
+                candidates
+                        .stream()
+                        .map(HotelDataItem::id)
+                        .toList(),
+                checkin,
+                checkout,
+                adults
+        );
 
         // Available-first: available hotels (ranked by price) come before the rest
         // (ranked by rating), so the list never looks empty in the sandbox.
@@ -202,6 +215,108 @@ public class HotelSearchService {
         return new HotelRatesDto(hotelId, checkin, checkout, nights, DEFAULT_CURRENCY, rooms);
     }
 
+    /**
+     * Rich content for one hotel from GET /v3.0/data/hotel: media gallery, video,
+     * facilities, policies, check-in/out. Content only — pricing comes from rates.
+     * Resilient: any failure returns an empty shell so the drawer still renders
+     * from the listing data it already has.
+     */
+    public HotelDetailsDto fetchHotelDetails(String hotelId) {
+        long t0 = System.currentTimeMillis();
+
+        HotelDetailResponse response;
+        try {
+            response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/v3.0/data/hotel")
+                            .queryParam("hotelId", hotelId)
+                            .build())
+                    .header("X-API-Key", apiKey)
+                    .header("accept", "application/json")
+                    .retrieve()
+                    .body(HotelDetailResponse.class);
+        } catch (Exception e) {
+            log.warn("Hotel details failed for {}: {}", hotelId, e.getMessage());
+            return emptyDetails(hotelId);
+        }
+
+        if (response == null || response.data() == null) {
+            return emptyDetails(hotelId);
+        }
+        HotelDetailData d = response.data();
+
+        // defaultImage first, then by order; prefer the HD url when present.
+        List<HotelImageDto> images = d.hotelImages() == null ? List.of()
+                : d.hotelImages().stream()
+                        .filter(img -> img.url() != null || img.urlHd() != null)
+                        .sorted(Comparator
+                                .comparing((HotelImage img) -> Boolean.TRUE.equals(img.defaultImage())).reversed()
+                                .thenComparing(img -> img.order() == null ? Integer.MAX_VALUE : img.order()))
+                        .map(img -> new HotelImageDto(
+                                img.urlHd() != null && !img.urlHd().isBlank() ? img.urlHd() : img.url(),
+                                img.caption()))
+                        .limit(MAX_IMAGES)
+                        .toList();
+
+        // Prefer structured facilities[].name; fall back to hotelFacilities[] strings.
+        List<String> facilities;
+        if (d.facilities() != null && !d.facilities().isEmpty()) {
+            facilities = d.facilities().stream()
+                    .map(Facility::name).filter(n -> n != null && !n.isBlank()).distinct().toList();
+        } else if (d.hotelFacilities() != null) {
+            facilities = d.hotelFacilities().stream().filter(n -> n != null && !n.isBlank()).distinct().toList();
+        } else {
+            facilities = List.of();
+        }
+
+        String checkinTime = null;
+        String checkoutTime = null;
+        if (d.checkinCheckoutTimes() != null) {
+            CheckinCheckoutTimes t = d.checkinCheckoutTimes();
+            checkinTime = t.checkin() != null ? t.checkin() : t.checkinStart();
+            checkoutTime = t.checkout();
+        }
+
+        List<HotelPolicyDto> policies = d.policies() == null ? List.of()
+                : d.policies().stream()
+                        .filter(p -> p.description() != null && !p.description().isBlank())
+                        .map(p -> new HotelPolicyDto(
+                                p.name() != null && !p.name().isBlank() ? p.name() : p.policyType(),
+                                p.description()))
+                        .toList();
+
+        log.info("Hotel details {}: {} images, {} facilities, video={} in {}ms",
+                hotelId, images.size(), facilities.size(), d.videoUrl() != null,
+                System.currentTimeMillis() - t0);
+
+        return new HotelDetailsDto(
+                d.id() != null ? d.id() : hotelId,
+                d.name(),
+                d.hotelDescription(),
+                d.hotelImportantInformation(),
+                d.videoUrl(),
+                images,
+                facilities,
+                checkinTime,
+                checkoutTime,
+                d.chain(),
+                d.hotelType(),
+                d.address(),
+                d.phone(),
+                d.email(),
+                d.parking(),
+                d.petsAllowed(),
+                d.childAllowed(),
+                policies
+        );
+    }
+
+    private HotelDetailsDto emptyDetails(String hotelId) {
+        return new HotelDetailsDto(hotelId, null, null, null, null,
+                List.of(), List.of(), null, null, null, null, null, null, null,
+                null, null, null, List.of());
+    }
+
     private RoomOfferDto toRoomOffer(RoomType rt) {
         Rate first = rt.rates().getFirst();
         boolean refundable = first.cancellationPolicies() != null
@@ -232,6 +347,127 @@ public class HotelSearchService {
         );
     }
 
+    /**
+     * Step 1 of booking: create a checkout session for a room offer. Re-validates
+     * availability and locks the final price, returning a {@code prebookId} for the
+     * book step. A sold-out or invalid offer surfaces as a 409/502 (never a 500),
+     * so it can't masquerade as an auth failure on the client.
+     */
+    public PrebookResultDto prebookHotel(String offerId) {
+        if (offerId == null || offerId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "offerId is required");
+        }
+        long t0 = System.currentTimeMillis();
+
+        PrebookResponse response;
+        try {
+            response = bookClient.post()
+                    .uri("/v3.0/rates/prebook")
+                    .header("X-API-Key", apiKey)
+                    .header("accept", "application/json")
+                    .header("content-type", "application/json")
+                    .body(Map.of("offerId", offerId, "usePaymentSdk", false))
+                    .retrieve()
+                    .body(PrebookResponse.class);
+        } catch (Exception e) {
+            log.warn("Prebook failed (offerId len={}): {}",
+                    offerId.length(), e.getMessage());
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "This rate is no longer available. Please pick another room.");
+        }
+
+        if (response == null || response.data() == null || response.data().prebookId() == null) {
+            log.warn("Prebook returned no data (offerId len={})", offerId.length());
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Could not confirm this rate. Please try again.");
+        }
+
+        PrebookData d = response.data();
+        log.info("Prebook ok: prebookId={} hotel={} price={} {} diff={}% cxlChg={} boardChg={} in {}ms",
+                d.prebookId(), d.hotelId(), d.price(), d.currency(),
+                d.priceDifferencePercent(), d.cancellationChanged(), d.boardChanged(),
+                System.currentTimeMillis() - t0);
+
+        return new PrebookResultDto(
+                d.prebookId(),
+                d.offerId(),
+                d.hotelId(),
+                d.checkin(),
+                d.checkout(),
+                d.currency() != null ? d.currency() : DEFAULT_CURRENCY,
+                d.price(),
+                d.priceDifferencePercent(),
+                d.cancellationChanged(),
+                d.boardChanged(),
+                d.termsAndConditions(),
+                d.paymentTypes() != null ? d.paymentTypes() : List.of()
+        );
+    }
+
+    /**
+     * Step 2 of booking: finalize a hotel reservation from a prebookId. Pays via
+     * ACC_CREDIT_CARD, which in sandbox simulates the charge and returns a real
+     * confirmed booking. An expired prebook or any failure surfaces as a 409/502
+     * (never a 500) so it can't masquerade as an auth failure on the client.
+     */
+    public HotelBookResultDto bookHotel(HotelBookRequest request) {
+        if (request == null || request.prebookId() == null || request.prebookId().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "prebookId is required");
+        }
+        long t0 = System.currentTimeMillis();
+
+        // The API requires occupancyNumber on each guest (1-based slot); assign
+        // it here so callers don't have to. The holder keeps it null (dropped).
+        List<GuestDto> guests = request.guests() != null ? request.guests() : List.of();
+        List<GuestDto> numberedGuests = new ArrayList<>(guests.size());
+        for (int i = 0; i < guests.size(); i++) {
+            GuestDto g = guests.get(i);
+            numberedGuests.add(new GuestDto(g.firstName(), g.lastName(), g.email(), i + 1));
+        }
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("prebookId", request.prebookId());
+        body.put("holder", request.holder());
+        body.put("guests", numberedGuests);
+        body.put("payment", Map.of("method", "ACC_CREDIT_CARD"));
+
+        BookResponse response;
+        try {
+            response = bookClient.post()
+                    .uri("/v3.0/rates/book")
+                    .header("X-API-Key", apiKey)
+                    .header("accept", "application/json")
+                    .header("content-type", "application/json")
+                    .body(body)
+                    .retrieve()
+                    .body(BookResponse.class);
+        } catch (Exception e) {
+            log.warn("Hotel book failed (prebookId={}): {}", request.prebookId(), e.getMessage());
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Couldn't complete this booking. The rate may have expired — please re-reserve the room.");
+        }
+
+        if (response == null || response.data() == null || response.data().bookingId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Booking did not confirm. Please try again.");
+        }
+
+        BookData d = response.data();
+        log.info("Hotel book ok: bookingId={} status={} conf={} price={} {} in {}ms",
+                d.bookingId(), d.status(), d.hotelConfirmationCode(), d.price(), d.currency(),
+                System.currentTimeMillis() - t0);
+
+        return new HotelBookResultDto(
+                d.bookingId(),
+                d.status(),
+                d.hotelConfirmationCode(),
+                d.checkin(),
+                d.checkout(),
+                d.price(),
+                d.currency() != null ? d.currency() : DEFAULT_CURRENCY
+        );
+    }
+
     private HotelOptionDto toHotelOption(HotelDataItem h, OfferPrice price, int nights) {
         boolean available = price != null;
         return new HotelOptionDto(
@@ -255,6 +491,88 @@ public class HotelSearchService {
                 nights
         );
     }
+
+    // --- hotel details response (GET /v3.0/data/hotel) ---
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record HotelDetailResponse(HotelDetailData data) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record HotelDetailData(
+            String id,
+            String name,
+            String hotelDescription,
+            String hotelImportantInformation,
+            CheckinCheckoutTimes checkinCheckoutTimes,
+            List<HotelImage> hotelImages,
+            @JsonProperty("main_photo") String mainPhoto,
+            String thumbnail,
+            String videoUrl,
+            String country,
+            String city,
+            Integer starRating,
+            String address,
+            List<String> hotelFacilities,
+            String chain,
+            List<Facility> facilities,
+            String phone,
+            String fax,
+            String email,
+            String hotelType,
+            String airportCode,
+            Double rating,
+            Integer reviewCount,
+            Boolean parking,
+            Boolean childAllowed,
+            Boolean petsAllowed,
+            List<Policy> policies
+    ) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record CheckinCheckoutTimes(String checkin, String checkout, String checkinStart, String checkinEnd) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record HotelImage(String url, String urlHd, String caption, Integer order, Boolean defaultImage) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record Facility(Integer facilityId, String name) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record Policy(@JsonProperty("policy_type") String policyType, String name, String description) {}
+
+    // --- prebook response (POST /v3.0/rates/prebook) ---
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record PrebookResponse(PrebookData data) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record PrebookData(
+            String prebookId,
+            String offerId,
+            String hotelId,
+            String checkin,
+            String checkout,
+            String currency,
+            double price,
+            int priceDifferencePercent,
+            boolean cancellationChanged,
+            boolean boardChanged,
+            String termsAndConditions,
+            List<String> paymentTypes
+    ) {}
+
+    // --- book response (POST /v3.0/rates/book) ---
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record BookResponse(BookData data) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record BookData(
+            String bookingId,
+            String status,
+            String hotelConfirmationCode,
+            String checkin,
+            String checkout,
+            double price,
+            String currency
+    ) {}
 
     // --- rates response (POST /v3.0/hotels/rates) ---
     @JsonIgnoreProperties(ignoreUnknown = true)

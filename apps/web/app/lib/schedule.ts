@@ -17,7 +17,7 @@ export function buildSchedule(
   departureISO: string,
   picks: Destination[],
   daysByLeg: number[],
-  homeAirport: string = "JFK",
+  homeAirport: string = "home",
 ): ScheduleEvent[] {
   const dep = parseDate(departureISO);
   const events: ScheduleEvent[] = [];
@@ -91,5 +91,3 @@ export function legDateRanges(
   }
   return ranges;
 }
-
-export const HOME_AIRPORT = "JFK";

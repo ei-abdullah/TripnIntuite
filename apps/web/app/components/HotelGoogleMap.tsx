@@ -12,13 +12,17 @@ type LatLng = { lat: number; lng: number };
 
 export default function HotelGoogleMap({
   destination,
+  destinationName,
   hotels,
   selectedIdx,
+  reservedHotelId = null,
   onSelect,
 }: {
   destination: LatLng;
+  destinationName?: string;
   hotels: HotelOption[];
   selectedIdx: number;
+  reservedHotelId?: string | null;
   onSelect: (index: number) => void;
 }) {
   return (
@@ -33,22 +37,30 @@ export default function HotelGoogleMap({
     >
       <FitBounds destination={destination} hotels={hotels} />
 
-      <AdvancedMarker position={destination} zIndex={0}>
-        <div className="hotel-anchor" aria-hidden />
+      <AdvancedMarker position={destination} zIndex={1}>
+        <div className="dest-marker">
+          <span className="dot" aria-hidden />
+          <span className="lbl serif">{destinationName || "Destination"}</span>
+        </div>
       </AdvancedMarker>
 
       {hotels.map((h, i) => {
         const isSel = i === selectedIdx;
+        const isReserved = reservedHotelId !== null && h.id === reservedHotelId;
         return (
           <AdvancedMarker
             key={h.id}
             position={{ lat: h.latitude, lng: h.longitude }}
             onClick={() => onSelect(i)}
-            zIndex={isSel ? 999 : i + 1}
+            zIndex={isReserved ? 1000 : isSel ? 999 : i + 2}
           >
-            <div className={`hotel-pin ${isSel ? "selected" : ""}`}>
-              <span className="num">{i + 1}</span>
-              {isSel && (
+            <div
+              className={`hotel-pin ${isSel ? "selected" : ""} ${
+                isReserved ? "reserved" : ""
+              }`}
+            >
+              <span className="num">{isReserved ? "✓" : i + 1}</span>
+              {(isSel || isReserved) && (
                 <span className="name serif" title={h.name}>
                   {h.name}
                 </span>
