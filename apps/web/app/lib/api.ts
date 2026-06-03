@@ -294,6 +294,147 @@ export async function getHotelRates(
   return res.json();
 }
 
+// Booking step 1: prebook a room offer. Locks the final price and returns a
+// prebookId for the book step. priceDifferencePercent !== 0, or either changed
+// flag being true, means the rate shifted since it was shown.
+export type PrebookResult = {
+  prebookId: string;
+  offerId: string;
+  hotelId: string;
+  checkin: string;
+  checkout: string;
+  currency: string;
+  price: number;
+  priceDifferencePercent: number;
+  cancellationChanged: boolean;
+  boardChanged: boolean;
+  termsAndConditions: string | null;
+  paymentTypes: string[];
+};
+
+export async function prebookHotel(offerId: string): Promise<PrebookResult> {
+  const res = await apiFetch("/api/trip/hotels/prebook", {
+    method: "POST",
+    body: JSON.stringify({ offerId }),
+  });
+  if (!res.ok) throw await readError(res);
+  return res.json();
+}
+
+// Booking step 2: finalize the reservation from a prebookId. Sandbox pays via
+// ACC_CREDIT_CARD (simulated, no real charge) and returns a confirmed booking.
+export type Guest = { firstName: string; lastName: string; email: string };
+
+export type HotelBookResult = {
+  bookingId: string;
+  status: string;
+  hotelConfirmationCode: string | null;
+  checkin: string;
+  checkout: string;
+  price: number;
+  currency: string;
+};
+
+export async function bookHotel(input: {
+  prebookId: string;
+  holder: Guest;
+  guests: Guest[];
+}): Promise<HotelBookResult> {
+  const res = await apiFetch("/api/trip/hotels/book", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw await readError(res);
+  return res.json();
+}
+
+// ----------------------------------------------------------------
+// Flight prebook (checkout). Unlike hotels, the flight prebook call itself
+// requires the traveller's contact + passenger details, so it fires from the
+// checkout screen — not from the itinerary. Sandbox credit-line (no Stripe).
+// ----------------------------------------------------------------
+export type Contact = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  phoneCountryCode?: string;
+  phoneNumber: string;
+};
+
+// passengerType: 0 = adult, 1 = child, 2 = infant. gender: "M" | "F".
+export type Passenger = {
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  gender?: string;
+  birthday?: string;
+  nationality?: string;
+  passengerType?: number;
+  documentType?: string;
+  documentNumber?: string;
+  documentExpiry?: string;
+  documentIssueCountry?: string;
+};
+
+// simulated=true: a synthesized confirmation (real LiteAPI flight booking is
+// payment-gated and unavailable on this sandbox account).
+export type FlightBookResult = {
+  bookingRef: string;
+  offerId: string;
+  status: string;
+  simulated: boolean;
+};
+
+export async function bookFlight(input: {
+  offerId: string;
+  contact: Contact;
+  passengers: Passenger[];
+}): Promise<FlightBookResult> {
+  const res = await apiFetch("/api/trip/flights/book", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw await readError(res);
+  return res.json();
+}
+
+// Rich, content-only hotel details from /v3.0/data/hotel. Fetched on demand
+// when the detail drawer opens (in parallel with rates). Pricing lives in
+// HotelRates, not here.
+export type HotelImage = { url: string; caption: string | null };
+export type HotelPolicy = { title: string | null; description: string };
+
+export type HotelDetails = {
+  hotelId: string;
+  name: string | null;
+  description: string | null;
+  importantInfo: string | null;
+  videoUrl: string | null;
+  images: HotelImage[];
+  facilities: string[];
+  checkinTime: string | null;
+  checkoutTime: string | null;
+  chain: string | null;
+  hotelType: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  parking: boolean | null;
+  petsAllowed: boolean | null;
+  childAllowed: boolean | null;
+  policies: HotelPolicy[];
+};
+
+export async function getHotelDetails(hotelId: string): Promise<HotelDetails> {
+  const res = await apiFetch(
+    `/api/trip/hotels/${encodeURIComponent(hotelId)}/details`,
+    { method: "GET" },
+  );
+  if (!res.ok) throw await readError(res);
+  return res.json();
+}
+
 export type NearestAirport = {
   id: string;
   name: string;

@@ -8,6 +8,7 @@ google:
 liteapi:
   key: ${LiteAPI_API_KEY}
   base-url: https://api.liteapi.travel
+  book-base-url: https://book.liteapi.travel
 
 security:
   jwt:

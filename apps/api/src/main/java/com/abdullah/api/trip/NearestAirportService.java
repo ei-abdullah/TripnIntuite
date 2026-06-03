@@ -70,32 +70,18 @@ public class NearestAirportService {
     }
 
     // ── request body ─────────────────────────
-    private record LatLng(double latitude, double longitude) {
-    }
-
-    private record Circle(LatLng center, double radius) {
-    }
-
-    private record LocationRestriction(Circle circle) {
-    }
-
+    private record LatLng(double latitude, double longitude) {}
+    private record Circle(LatLng center, double radius) {}
+    private record LocationRestriction(Circle circle) {}
     private record SearchNearbyRequest(
             List<String> includedTypes,
             int maxResultCount,
             LocationRestriction locationRestriction
-    ) {
-    }
+    ) {}
 
     // ── response body ────────────────────────
-    private record PlacesResponse(List<Place> places) {
-    }
-
-    private record Place(String id, DisplayName displayName, String formattedAddress, Location location) {
-    }
-
-    private record DisplayName(String text, String languageCode) {
-    }
-
-    private record Location(double latitude, double longitude) {
-    }
+    private record PlacesResponse(List<Place> places) {}
+    private record Place(String id, DisplayName displayName, String formattedAddress, Location location) {}
+    private record DisplayName(String text, String languageCode) {}
+    private record Location(double latitude, double longitude) {}
 }

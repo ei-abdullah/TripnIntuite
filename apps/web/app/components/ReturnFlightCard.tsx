@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import type { FlightOption } from "../lib/api";
 import FlightSummary from "./FlightSummary";
 import AirlineChips from "./AirlineChips";
@@ -12,13 +11,16 @@ export default function ReturnFlightCard({
   to,
   dateLabel,
   flights,
+  sel,
+  onSel,
 }: {
   from: string;
   to: string;
   dateLabel: string;
   flights: FlightOption[] | null;
+  sel: number;
+  onSel: (index: number) => void;
 }) {
-  const [sel, setSel] = useState(0);
   const selectedFlight =
     flights && flights.length > 0
       ? flights[Math.min(sel, flights.length - 1)]
@@ -75,7 +77,7 @@ export default function ReturnFlightCard({
               ))}
             </div>
           ) : (
-            <AirlineChips options={flights} selected={sel} onSelect={setSel} />
+            <AirlineChips options={flights} selected={sel} onSelect={onSel} />
           )}
         </div>
 

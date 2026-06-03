@@ -12,15 +12,19 @@ export default function MapTabs({
   selectedFlight,
   selectedHotel,
   destination,
+  destinationName,
   hotels,
   hotelSelectedIdx,
+  reservedHotelId = null,
   onHotelSelect,
 }: {
   selectedFlight: FlightOption | null;
   selectedHotel: HotelOption | null;
   destination: { lat: number; lng: number };
+  destinationName?: string;
   hotels: HotelOption[];
   hotelSelectedIdx: number;
+  reservedHotelId?: string | null;
   onHotelSelect: (index: number) => void;
 }) {
   const [tab, setTab] = useState<Tab>("flight");
@@ -50,9 +54,11 @@ export default function MapTabs({
         ) : (
           <HotelsPane
             destination={destination}
+            destinationName={destinationName}
             hotels={hotels}
             selectedIdx={hotelSelectedIdx}
             selectedHotel={selectedHotel}
+            reservedHotelId={reservedHotelId}
             onSelect={onHotelSelect}
           />
         )}
@@ -104,15 +110,19 @@ function FlightPathPane({ flight }: { flight: FlightOption | null }) {
 
 function HotelsPane({
   destination,
+  destinationName,
   hotels,
   selectedIdx,
   selectedHotel,
+  reservedHotelId,
   onSelect,
 }: {
   destination: { lat: number; lng: number };
+  destinationName?: string;
   hotels: HotelOption[];
   selectedIdx: number;
   selectedHotel: HotelOption | null;
+  reservedHotelId: string | null;
   onSelect: (index: number) => void;
 }) {
   if (hotels.length === 0) {
@@ -134,8 +144,10 @@ function HotelsPane({
       <div className="map-block">
         <HotelGoogleMap
           destination={destination}
+          destinationName={destinationName}
           hotels={hotels}
           selectedIdx={selectedIdx}
+          reservedHotelId={reservedHotelId}
           onSelect={onSelect}
         />
       </div>

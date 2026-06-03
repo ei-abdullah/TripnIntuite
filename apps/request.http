@@ -174,7 +174,6 @@ Content-Type: application/json
   "latitude": 34.052235,
   "longitude": -118.243683,
   "radius": 5000,
-  "aiSearch": "Romantic getaway with Italian vibes in London near the London Eye",
   "limit": 3,
   "includeHotelData": true
 }

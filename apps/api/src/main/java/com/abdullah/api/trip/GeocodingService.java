@@ -40,16 +40,8 @@ public class GeocodingService {
     }
 
     public record LatLng(double lat, double lng) {}
-
-    private record GeocodeResponse(List<Result> results, String status) {
-    }
-
-    private record Result(Geometry geometry, String formatted_address) {
-    }
-
-    private record Geometry(LocationLatLng location) {
-    }
-
-    private record LocationLatLng(double lat, double lng) {
-    }
+    private record GeocodeResponse(List<Result> results, String status) {}
+    private record Result(Geometry geometry, String formatted_address) {}
+    private record Geometry(LocationLatLng location) {}
+    private record LocationLatLng(double lat, double lng) {}
 }
