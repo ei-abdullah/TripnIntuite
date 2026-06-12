@@ -125,7 +125,7 @@ export function flightPathMapUrl({
   width?: number;
   height?: number;
 }): string {
-  const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "";
+  const key = "AIzaSyC2dpNycne5Qc8DQELbjJMuACvaucsLwPw";
 
   const points = [origin, ...via, destination];
 
