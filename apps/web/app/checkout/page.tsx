@@ -112,19 +112,19 @@ export default function CheckoutPage() {
   const flightCurrency = flightLines[0]?.flight.currency ?? "USD";
 
   // ── traveller / contact form ──────────────────────────────────
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [firstName, setFirstName] = useState("Abdullah");
+  const [lastName, setLastName] = useState("Zafar");
   const [email, setEmail] = useState(user?.email ?? "");
-  const [phoneCountryCode, setPhoneCountryCode] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneCountryCode, setPhoneCountryCode] = useState("92");
+  const [phoneNumber, setPhoneNumber] = useState("03155180641");
   const [gender, setGender] = useState("M");
-  const [birthday, setBirthday] = useState("");
-  const [nationality, setNationality] = useState("");
-  const [showDoc, setShowDoc] = useState(false);
+  const [birthday, setBirthday] = useState("2005-10-24");
+  const [nationality, setNationality] = useState("PK");
+  const [showDoc, setShowDoc] = useState(true);
   const [docType, setDocType] = useState("passport");
-  const [docNumber, setDocNumber] = useState("");
-  const [docExpiry, setDocExpiry] = useState("");
-  const [docCountry, setDocCountry] = useState("");
+  const [docNumber, setDocNumber] = useState("12345678");
+  const [docExpiry, setDocExpiry] = useState("2027-06-26");
+  const [docCountry, setDocCountry] = useState("PK");
 
   const [submitState, setSubmitState] = useState<"idle" | "submitting" | "done">(
     "idle",

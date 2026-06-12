@@ -5,7 +5,7 @@ import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {orderedPicks, useTripStore} from "../lib/tripStore";
 import {buildSchedule} from "../lib/schedule";
-import {fmtDateLong} from "../lib/dates";
+import {fmtDateLong, fmtISO} from "../lib/dates";
 
 export default function PlanPage() {
   const router = useRouter();
@@ -34,6 +34,14 @@ export default function PlanPage() {
     }
     initDaysIfEmpty(picks.length);
   }, [intuitions.length, picks.length, router, initDaysIfEmpty]);
+
+  // Earliest selectable departure is tomorrow — today and past dates are
+  // disabled so a trip can't be planned for the current or a previous day.
+  const minDeparture = useMemo(() => {
+    const t = new Date();
+    t.setUTCDate(t.getUTCDate() + 1);
+    return fmtISO(t);
+  }, []);
 
   const homeIata = departureAirport?.iataCode ?? "home";
   const schedule = useMemo(
@@ -78,6 +86,7 @@ export default function PlanPage() {
             <input
               type="date"
               value={departure}
+              min={minDeparture}
               onChange={(e) => setDeparture(e.target.value)}
             />
           </div>
