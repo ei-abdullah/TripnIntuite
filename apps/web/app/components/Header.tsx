@@ -14,7 +14,15 @@ export default function Header() {
   const token = useAuthStore((s) => s.token);
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [prevPath, setPrevPath] = useState(pathname);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close the menu when the route changes. Adjusting state during render (vs. in
+  // an effect) avoids the cascading re-render that set-state-in-effect causes.
+  if (pathname !== prevPath) {
+    setPrevPath(pathname);
+    setMenuOpen(false);
+  }
 
   const isPast = pathname === "/past";
   const isAuthed = !!token;
@@ -41,11 +49,6 @@ export default function Header() {
     return () => document.removeEventListener("keydown", handler);
   }, [menuOpen]);
 
-  // Close on route change
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
-
   const handleLogout = () => {
     setMenuOpen(false);
     logout();
@@ -62,8 +65,8 @@ export default function Header() {
         </Link>
 
         <nav className="nav">
-          <Link className={`nav-link ${isPast ? "active" : ""}`} href="/past">
-            Past Searches
+          <Link className={`nav-link ${isPast ? "active" : ""}`} href="/trips">
+            Trips
           </Link>
 
           {hydrated &&

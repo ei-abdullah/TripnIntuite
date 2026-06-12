@@ -3,15 +3,17 @@
 import type {FlightOption} from "../lib/api";
 import {fmtChipDate, fmtClock, fmtDuration, fmtUSD} from "../lib/dates";
 
+interface AirlineChipsProps {
+  options: FlightOption[];
+  selected: number;
+  onSelect: (index: number) => void;
+}
+
 export default function AirlineChips({
   options,
   selected,
   onSelect,
-}: {
-  options: FlightOption[];
-  selected: number;
-  onSelect: (index: number) => void;
-}) {
+}: AirlineChipsProps) {
   if (!options.length) {
     return (
       <div className="airline-chips">

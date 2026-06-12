@@ -1,6 +1,7 @@
 "use client";
 
 import {useEffect, useState} from "react";
+import {useRouter} from "next/navigation";
 import type {Intuition} from "../lib/api";
 
 type ConsoleLine = {
@@ -13,11 +14,15 @@ type ConsoleLine = {
 
 export default function AgentConsole({
   intuitions,
-  onDone,
+  doneHref,
 }: {
   intuitions: Intuition[];
-  onDone: () => void;
+  // Route to navigate to once the console finishes. A serializable string prop
+  // (rather than an onDone callback) keeps this client component's props valid
+  // across the server/client boundary.
+  doneHref: string;
 }) {
+  const router = useRouter();
   const [lines, setLines] = useState<ConsoleLine[]>([]);
   const [running, setRunning] = useState(true);
 
@@ -87,7 +92,7 @@ export default function AgentConsole({
     timers.push(
       setTimeout(() => {
         setRunning(false);
-        onDone();
+        router.push(doneHref);
       }, finishAt + 700),
     );
 

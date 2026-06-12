@@ -2,8 +2,14 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { orderedPicks, useTripStore } from "../lib/tripStore";
 import { useAuthStore } from "../lib/authStore";
+import {
+  useBookingsStore,
+  type BookedFlight,
+  type BookedHotel,
+} from "../lib/bookingsStore";
 import { fmtDuration } from "../lib/dates";
 import {
   ApiError,
@@ -48,6 +54,8 @@ export default function CheckoutPage() {
   const returnFlight = useTripStore((s) => s.returnFlight);
   const reservations = useTripStore((s) => s.reservations);
   const user = useAuthStore((s) => s.user);
+  const addBooking = useBookingsStore((s) => s.addBooking);
+  const router = useRouter();
 
   const picks = useMemo(
     () => orderedPicks(intuitions, picksRecord),
@@ -208,6 +216,56 @@ export default function CheckoutPage() {
     setHotelResults(nextHotelResults);
     setErrors(nextErrors);
     setSubmitState("done");
+
+    // Fully successful → persist the trip and head to the confirmation screen.
+    // Any failure: stay here so the errors are visible and retryable.
+    const failed = Object.keys(nextErrors).length;
+    if (failed === 0) {
+      const bookedFlights: BookedFlight[] = flightLines
+        .filter((l) => nextResults[l.key])
+        .map((l) => ({
+          key: l.key,
+          label: l.label,
+          route: l.route,
+          carrierName: l.flight.carrierName,
+          price: l.flight.price,
+          currency: l.flight.currency,
+          bookingRef: nextResults[l.key].bookingRef,
+          simulated: nextResults[l.key].simulated,
+        }));
+      const bookedHotels: BookedHotel[] = hotelLines
+        .filter((l) => nextHotelResults[l.key])
+        .map((l) => {
+          const r = nextHotelResults[l.key];
+          return {
+            key: l.key,
+            label: l.label,
+            name: l.name,
+            dates: l.dates,
+            price: l.price,
+            currency: l.currency,
+            bookingId: r.bookingId,
+            status: r.status,
+            hotelConfirmationCode: r.hotelConfirmationCode,
+          };
+        });
+
+      if (bookedFlights.length + bookedHotels.length > 0) {
+        const id = crypto.randomUUID();
+        addBooking({
+          id,
+          createdAt: new Date().toISOString(),
+          title: picks.map((p) => p.name).join(" → ") || "Your trip",
+          homeIata,
+          flights: bookedFlights,
+          hotels: bookedHotels,
+          flightsTotal: bookedFlights.reduce((s, f) => s + f.price, 0),
+          hotelsTotal: bookedHotels.reduce((s, h) => s + h.price, 0),
+          currency: flightCurrency,
+        });
+        router.push(`/trips/${id}`);
+      }
+    }
   }
 
   const isEmpty = flightLines.length === 0 && hotelLines.length === 0;
