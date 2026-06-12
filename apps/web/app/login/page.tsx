@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import AuthSlider from "../components/AuthSlider";
 
 export default function LoginPage() {
-  return <AuthSlider initialMode="login" />;
+  return (
+    <Suspense fallback={null}>
+      <AuthSlider initialMode="login" />
+    </Suspense>
+  );
 }
