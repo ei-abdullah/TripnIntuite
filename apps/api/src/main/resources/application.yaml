@@ -18,9 +18,9 @@ spring:
   application:
     name: api
   datasource:
-    url: jdbc:postgresql://localhost:5432/travel_db
-    username: user
-    password: admin
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -54,8 +54,3 @@ spring:
       chat:
         model: claude-opus-4-7
         max-tokens: 4096
-
-logging:
-  level:
-    org.springframework.ai: INFO
-    com.abdullah.api: DEBUG

@@ -7,14 +7,18 @@ import com.abdullah.api.trip.dto.HotelBookResultDto;
 import com.abdullah.api.trip.dto.HotelDetailsDto;
 import com.abdullah.api.trip.dto.HotelRatesDto;
 import com.abdullah.api.trip.dto.HotelResultDto;
+import com.abdullah.api.trip.dto.ItineraryEmailRequest;
 import com.abdullah.api.trip.dto.LegResultDto;
 import com.abdullah.api.trip.dto.NearestAirportDto;
 import com.abdullah.api.trip.dto.ParseRequest;
 import com.abdullah.api.trip.dto.ParseResponse;
 import com.abdullah.api.trip.dto.PrebookRequest;
 import com.abdullah.api.trip.dto.PrebookResultDto;
+import com.abdullah.api.email.EmailService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.Map;
@@ -27,17 +31,20 @@ public class TripController {
     private final NearestAirportService nearestAirport;
     private final FlightSearchService flightSearch;
     private final HotelSearchService hotelSearch;
+    private final EmailService emailService;
 
     public TripController(
             CoordinatorService coordinator,
             NearestAirportService nearestAirport,
             FlightSearchService flightSearch,
-            HotelSearchService hotelSearch
+            HotelSearchService hotelSearch,
+            EmailService emailService
     ) {
         this.coordinator = coordinator;
         this.nearestAirport = nearestAirport;
         this.flightSearch = flightSearch;
         this.hotelSearch = hotelSearch;
+        this.emailService = emailService;
     }
 
     @PostMapping("/parse")
@@ -106,6 +113,17 @@ public class TripController {
     @PostMapping("/flights/book")
     public FlightBookResultDto flightBook(@RequestBody FlightBookRequest request) {
         return flightSearch.bookFlight(request);
+    }
+
+    @PostMapping("/email/itinerary")
+    public ResponseEntity<Map<String, Boolean>> emailItinerary(@RequestBody ItineraryEmailRequest request) {
+        if (request.to() == null || request.to().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing recipient email.");
+        }
+        // Fire-and-forget: the send is @Async, so the request returns immediately
+        // and a slow SMTP handshake never blocks the checkout flow.
+        emailService.sendItineraryEmail(request);
+        return ResponseEntity.accepted().body(Map.of("sent", true));
     }
 
     @GetMapping("/health")

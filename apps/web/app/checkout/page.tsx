@@ -15,6 +15,7 @@ import {
   ApiError,
   bookFlight,
   bookHotel,
+  sendItineraryEmail,
   type Contact,
   type FlightBookResult,
   type FlightOption,
@@ -22,6 +23,7 @@ import {
   type HotelBookResult,
   type Passenger,
 } from "../lib/api";
+import type { TripBooking } from "../lib/bookingsStore";
 
 type FlightLine = { key: string; label: string; route: string; flight: FlightOption };
 type HotelLine = {
@@ -232,6 +234,8 @@ export default function CheckoutPage() {
           currency: l.flight.currency,
           bookingRef: nextResults[l.key].bookingRef,
           simulated: nextResults[l.key].simulated,
+          departISO: l.flight.departureTime,
+          arriveISO: l.flight.arrivalTime,
         }));
       const bookedHotels: BookedHotel[] = hotelLines
         .filter((l) => nextHotelResults[l.key])
@@ -247,12 +251,14 @@ export default function CheckoutPage() {
             bookingId: r.bookingId,
             status: r.status,
             hotelConfirmationCode: r.hotelConfirmationCode,
+            checkinISO: r.checkin,
+            checkoutISO: r.checkout,
           };
         });
 
       if (bookedFlights.length + bookedHotels.length > 0) {
         const id = crypto.randomUUID();
-        addBooking({
+        const booking: TripBooking = {
           id,
           createdAt: new Date().toISOString(),
           title: picks.map((p) => p.name).join(" → ") || "Your trip",
@@ -262,7 +268,11 @@ export default function CheckoutPage() {
           flightsTotal: bookedFlights.reduce((s, f) => s + f.price, 0),
           hotelsTotal: bookedHotels.reduce((s, h) => s + h.price, 0),
           currency: flightCurrency,
-        });
+          contactEmail: email.trim(),
+        };
+        addBooking(booking);
+        // Fire the confirmation email (best-effort — never block the redirect).
+        void sendItineraryEmail(booking, email.trim()).catch(() => {});
         router.push(`/trips/${id}`);
       }
     }

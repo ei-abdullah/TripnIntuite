@@ -14,6 +14,9 @@ export type BookedFlight = {
   currency: string;
   bookingRef: string;
   simulated: boolean;
+  // ISO datetimes — drive the .ics events and add-to-calendar links.
+  departISO?: string;
+  arriveISO?: string;
 };
 
 export type BookedHotel = {
@@ -26,6 +29,9 @@ export type BookedHotel = {
   bookingId: string;
   status: string;
   hotelConfirmationCode: string | null;
+  // ISO dates (YYYY-MM-DD) — all-day calendar events for the stay.
+  checkinISO?: string;
+  checkoutISO?: string;
 };
 
 export type TripBooking = {
@@ -38,6 +44,8 @@ export type TripBooking = {
   flightsTotal: number;
   hotelsTotal: number;
   currency: string;
+  // Recipient used for the confirmation email + on-demand resend.
+  contactEmail?: string;
 };
 
 type BookingsState = {

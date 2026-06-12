@@ -1,15 +1,19 @@
 package com.abdullah.api.email;
 
 
+import com.abdullah.api.trip.dto.ItineraryEmailRequest;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
@@ -164,5 +168,137 @@ public class EmailService {
             log.error("Failed to send email to {}: {}", email, e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
         }
+    }
+
+    // ── Itinerary / booking confirmation ──────────────────────────────────
+    // List-style email (flights + stays + totals) with the trip's .ics attached.
+    // Same template backs both the auto-sent checkout confirmation and the
+    // on-demand resend from the trip page.
+    @Async
+    public CompletableFuture<Void> sendItineraryEmail(ItineraryEmailRequest req) {
+        try {
+            String content = renderItinerary(req);
+            String ics = IcsBuilder.build(req);
+
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+            helper.setTo(req.to());
+            helper.setSubject("Your trip is booked — " + safe(req.title()));
+            helper.setFrom(from);
+            helper.setText(content, true);
+            helper.addAttachment(
+                    "majestor-trip.ics",
+                    new ByteArrayResource(ics.getBytes(StandardCharsets.UTF_8)),
+                    "text/calendar"
+            );
+
+            mailSender.send(mimeMessage);
+            return CompletableFuture.completedFuture(null);
+        } catch (Exception e) {
+            log.error("Failed to send itinerary email to {}: {}", req.to(), e.getMessage(), e);
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    private String renderItinerary(ItineraryEmailRequest req) {
+        List<ItineraryEmailRequest.EmailFlight> flights =
+                req.flights() != null ? req.flights() : List.of();
+        List<ItineraryEmailRequest.EmailHotel> hotels =
+                req.hotels() != null ? req.hotels() : List.of();
+
+        StringBuilder rows = new StringBuilder();
+        if (!flights.isEmpty()) {
+            rows.append(sectionHeading("Flights"));
+            for (ItineraryEmailRequest.EmailFlight f : flights) {
+                rows.append(lineItem(
+                        safe(f.label()),
+                        safe(f.carrierName()) + " · " + safe(f.route()),
+                        "Ref " + safe(f.bookingRef()),
+                        money(f.price(), f.currency())
+                ));
+            }
+        }
+        if (!hotels.isEmpty()) {
+            rows.append(sectionHeading("Stays"));
+            for (ItineraryEmailRequest.EmailHotel h : hotels) {
+                String ref = h.hotelConfirmationCode() != null && !h.hotelConfirmationCode().isBlank()
+                        ? h.hotelConfirmationCode()
+                        : safe(h.bookingId());
+                rows.append(lineItem(
+                        safe(h.label()),
+                        safe(h.name()),
+                        safe(h.dates()) + " · " + ref,
+                        money(h.price(), h.currency())
+                ));
+            }
+        }
+
+        double total = req.flightsTotal() + req.hotelsTotal();
+        String currency = safe(req.currency());
+
+        return """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body style="margin:0;padding:0;background-color:#F7F5F0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;color:#111111;width:100%% !important;-webkit-text-size-adjust:100%%;">
+                <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" border="0" style="background-color:#F7F5F0;padding:48px 20px;">
+                    <tr><td align="center" valign="top">
+                        <table role="presentation" width="560" cellspacing="0" cellpadding="0" border="0" style="background-color:#FFFFFF;border:1px solid #E4E0D8;max-width:560px;width:100%%;">
+                            <tr><td align="center" style="background-color:#111111;padding:40px 32px;">
+                                <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:30px;color:#F7F5F0;line-height:1;"><em style="font-style:italic;">Majestor</em></p>
+                                <p style="margin:12px 0 0;font-size:11px;text-transform:uppercase;letter-spacing:0.22em;color:#A39E96;">You're booked</p>
+                            </td></tr>
+                            <tr><td style="padding:40px 36px 16px;">
+                                <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:0.22em;color:#6B6862;">Itinerary</p>
+                                <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:400;color:#111111;letter-spacing:-0.01em;line-height:1.15;">%s</h1>
+                                <p style="margin:10px 0 0;color:#6B6862;font-size:13px;">Departing from %s · everything below is confirmed. The attached calendar file (.ics) adds it all to your calendar.</p>
+                            </td></tr>
+                            <tr><td style="padding:8px 36px 8px;">
+                                <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" border="0">%s</table>
+                            </td></tr>
+                            <tr><td style="padding:8px 36px 40px;">
+                                <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" border="0" style="border-top:2px solid #111111;margin-top:8px;">
+                                    <tr><td style="padding-top:16px;font-size:11px;text-transform:uppercase;letter-spacing:0.18em;color:#111111;">Total paid</td>
+                                        <td align="right" style="padding-top:16px;font-family:Georgia,serif;font-size:22px;color:#111111;">%s</td></tr>
+                                </table>
+                            </td></tr>
+                            <tr><td align="center" style="background-color:#111111;padding:24px 32px;">
+                                <p style="margin:0;color:#A39E96;font-size:11px;line-height:1.55;">Automated confirmation · Flight bookings are sandbox-simulated.<br>&copy; 2026 Majestor. Travel by feeling.</p>
+                            </td></tr>
+                        </table>
+                    </td></tr>
+                </table>
+            </body>
+            </html>
+            """.formatted(safe(req.title()), safe(req.homeIata()), rows.toString(),
+                money(total, currency));
+    }
+
+    private static String sectionHeading(String label) {
+        return """
+            <tr><td colspan="2" style="padding:20px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.2em;color:#9C3D1A;border-bottom:1px solid #E4E0D8;">%s</td></tr>
+            """.formatted(safe(label));
+    }
+
+    private static String lineItem(String label, String primary, String meta, String price) {
+        return """
+            <tr>
+                <td style="padding:14px 0;border-bottom:1px solid #F0EDE6;">
+                    <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.16em;color:#A39E96;">%s</div>
+                    <div style="font-size:15px;color:#111111;margin-top:3px;">%s</div>
+                    <div style="font-size:12px;color:#6B6862;margin-top:2px;">%s</div>
+                </td>
+                <td align="right" valign="top" style="padding:14px 0;border-bottom:1px solid #F0EDE6;font-family:Georgia,serif;font-size:15px;color:#111111;white-space:nowrap;">%s</td>
+            </tr>
+            """.formatted(label, primary, meta, price);
+    }
+
+    private static String money(double amount, String currency) {
+        return safe(currency) + " " + Math.round(amount);
+    }
+
+    private static String safe(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }
