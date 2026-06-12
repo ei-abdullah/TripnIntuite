@@ -1,5 +1,6 @@
 import {Destination} from "./data";
 import {useAuthStore} from "./authStore";
+import type {TripBooking} from "./bookingsStore";
 
 // ----------------------------------------------------------------
 // Shared types (mirror backend DTOs)
@@ -448,6 +449,52 @@ export async function getNearestAirport(lat: number, lng: number): Promise<Neare
   const res = await fetch(`/api/trip/nearest-airport?lat=${lat}&lng=${lng}`);
   if (!res.ok) throw await readError(res);
   return res.json();
+}
+
+// ----------------------------------------------------------------
+// Itinerary email — posts the completed booking to the backend, which renders
+// the confirmation email (flights + stays + totals) and attaches the trip .ics.
+// Source of truth is the client (the DB is create-drop), so the whole booking
+// travels in the body. Backed by an @Async send, so this returns ~immediately.
+// ----------------------------------------------------------------
+export async function sendItineraryEmail(
+  booking: TripBooking,
+  to: string,
+): Promise<void> {
+  const payload = {
+    to,
+    title: booking.title,
+    homeIata: booking.homeIata,
+    currency: booking.currency,
+    flightsTotal: booking.flightsTotal,
+    hotelsTotal: booking.hotelsTotal,
+    flights: booking.flights.map((f) => ({
+      label: f.label,
+      route: f.route,
+      carrierName: f.carrierName,
+      price: f.price,
+      currency: f.currency,
+      bookingRef: f.bookingRef,
+      departISO: f.departISO ?? null,
+      arriveISO: f.arriveISO ?? null,
+    })),
+    hotels: booking.hotels.map((h) => ({
+      label: h.label,
+      name: h.name,
+      dates: h.dates,
+      price: h.price,
+      currency: h.currency,
+      bookingId: h.bookingId,
+      hotelConfirmationCode: h.hotelConfirmationCode,
+      checkinISO: h.checkinISO ?? null,
+      checkoutISO: h.checkoutISO ?? null,
+    })),
+  };
+  const res = await apiFetch("/api/trip/email/itinerary", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw await readError(res);
 }
 
 export async function parsePrompt(prompt: string): Promise<Intuition[]> {
