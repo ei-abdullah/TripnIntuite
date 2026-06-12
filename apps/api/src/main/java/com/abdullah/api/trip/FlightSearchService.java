@@ -77,7 +77,7 @@ public class FlightSearchService {
         // cheapest fare variant in each group.
         Map<String, Journey> bySignature = journeys.stream()
                 .collect(Collectors.toMap(
-                        this::flightSignature,
+                         this::flightSignature,
                         j -> j,
                         (a, b) -> a.cheapestOffer().pricing().display().total()
                                 <= b.cheapestOffer().pricing().display().total() ? a : b,
