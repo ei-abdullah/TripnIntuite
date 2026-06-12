@@ -1,6 +1,3 @@
-app:
-  base-url: ${APP_BASE_URL:http://localhost:8080}
-
 google:
   maps:
     api-key: ${GOOGLE_MAPS_API_KEY}
@@ -64,6 +61,10 @@ logging:
     org.springframework.web: INFO
 
 server:
+  # Honor X-Forwarded-Proto/Host from DigitalOcean's proxy so URLs built from
+  # the request (ServletUriComponentsBuilder) use the public https host, not the
+  # internal http://…:8080.
+  forward-headers-strategy: framework
   error:
     include-message: always
     include-stacktrace: always

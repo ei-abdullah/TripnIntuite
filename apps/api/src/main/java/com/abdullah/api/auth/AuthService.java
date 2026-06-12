@@ -14,12 +14,12 @@ import com.abdullah.api.user.UserPrincipal;
 import com.abdullah.api.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.time.Instant;
 import java.util.List;
@@ -35,9 +35,6 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final EmailService emailService;
-
-    @Value("${app.base-url}")
-    private String baseUrl;
 
     public UserDto signup(SignupRequest request) {
         log.info("Signup: start email={} username={}", request.email(), request.username());
@@ -75,7 +72,13 @@ public class AuthService {
         }
 
         try {
-            String verificationUrl = baseUrl + "/api/v1/auth/signup/verify?token=" + verificationToken;
+            // Build the URL from the current request context (host/scheme come
+            // from the incoming request) — same approach as the sister project.
+            // Runs on the request thread, before the async email dispatch.
+            String verificationUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/api/v1/auth/signup/verify")
+                    .queryParam("token", verificationToken)
+                    .toUriString();
             emailService.sendVerificationEmail(saved.getEmail(), verificationUrl);
             log.info("Signup: verification email dispatched (async) to {}", saved.getEmail());
         } catch (Exception e) {
@@ -95,6 +98,7 @@ public class AuthService {
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
 
+        assert principal != null;
         User user = userRepository.findByEmail(principal.getUsername())
                 .orElseThrow(() -> new EntityNotFoundException("User not found after authentication"));
 
