@@ -2,6 +2,7 @@ package com.abdullah.api.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -15,8 +16,24 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
 import java.util.stream.Collectors;
 
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    // Catch-all: any exception with no more specific handler above lands here.
+    // Previously these fell through to Spring's default /error path, which does
+    // NOT log the stack trace — so production 500s were invisible. Log the full
+    // trace and still return our standard ApiError body.
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleUnexpected(
+            Exception exception,
+            HttpServletRequest request
+    ) {
+        log.error("Unhandled exception on {} {} -> {}: {}",
+                request.getMethod(), request.getRequestURI(),
+                exception.getClass().getName(), exception.getMessage(), exception);
+        return build(request, "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiError> handle(

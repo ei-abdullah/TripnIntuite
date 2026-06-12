@@ -40,12 +40,15 @@ public class AuthService {
     private String baseUrl;
 
     public UserDto signup(SignupRequest request) {
+        log.info("Signup: start email={} username={}", request.email(), request.username());
+
         if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new DuplicateResourceException("Email already registered");
         }
         if (userRepository.findByUsername(request.username()) != null) {
             throw new DuplicateResourceException("Username already taken");
         }
+        log.info("Signup: uniqueness checks passed for email={}", request.email());
 
         String verificationToken = UUID.randomUUID().toString();
         Instant now = Instant.now();
@@ -61,13 +64,27 @@ public class AuthService {
                 .updatedAt(now)
                 .build();
 
-        User saved = userRepository.save(user);
+        User saved;
+        try {
+            saved = userRepository.save(user);
+            log.info("Signup: persisted user id={} email={}", saved.getId(), saved.getEmail());
+        } catch (Exception e) {
+            log.error("Signup: save FAILED for email={} -> {}: {}",
+                    request.email(), e.getClass().getName(), e.getMessage(), e);
+            throw e;
+        }
 
-        String verificationUrl = baseUrl + "/api/v1/auth/signup/verify?token=" + verificationToken;
-        emailService.sendVerificationEmail(saved.getEmail(), verificationUrl);
-        log.info("Signup: created user id={} email={} (verification email dispatched)",
-                saved.getId(), saved.getEmail());
+        try {
+            String verificationUrl = baseUrl + "/api/v1/auth/signup/verify?token=" + verificationToken;
+            emailService.sendVerificationEmail(saved.getEmail(), verificationUrl);
+            log.info("Signup: verification email dispatched (async) to {}", saved.getEmail());
+        } catch (Exception e) {
+            log.error("Signup: email dispatch FAILED for email={} -> {}: {}",
+                    saved.getEmail(), e.getClass().getName(), e.getMessage(), e);
+            throw e;
+        }
 
+        log.info("Signup: complete for user id={} email={}", saved.getId(), saved.getEmail());
         return UserDto.from(saved);
     }
 
