@@ -12,7 +12,7 @@ import LegCard from "../components/LegCard";
 import ReturnFlightCard from "../components/ReturnFlightCard";
 import BookingsDrawer, {type BookingEntry} from "../components/BookingsDrawer";
 
-const MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "";
+const MAPS_KEY = "AIzaSyC2dpNycne5Qc8DQELbjJMuACvaucsLwPw";
 
 export default function TripPage() {
   const router = useRouter();
