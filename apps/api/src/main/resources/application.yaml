@@ -1,3 +1,6 @@
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+
 google:
   maps:
     api-key: ${GOOGLE_MAPS_API_KEY}
@@ -51,3 +54,15 @@ spring:
       chat:
         model: claude-opus-4-7
         max-tokens: 4096
+
+logging:
+  level:
+    com.abdullah.api: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+    org.springframework.web: INFO
+
+server:
+  error:
+    include-message: always
+    include-stacktrace: always

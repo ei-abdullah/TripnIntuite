@@ -32,7 +32,12 @@ public class GlobalExceptionHandler {
         log.error("Unhandled exception on {} {} -> {}: {}",
                 request.getMethod(), request.getRequestURI(),
                 exception.getClass().getName(), exception.getMessage(), exception);
-        return build(request, "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
+        // TEMP DEBUG: surface the real exception type + message in the response
+        // body so failures are visible without digging through server logs.
+        // Revert to a generic "Internal server error" message before going live.
+        String detail = exception.getClass().getSimpleName()
+                + (exception.getMessage() != null ? ": " + exception.getMessage() : "");
+        return build(request, detail, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
