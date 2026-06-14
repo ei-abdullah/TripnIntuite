@@ -120,8 +120,7 @@ public class TripController {
         if (request.to() == null || request.to().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing recipient email.");
         }
-        // Fire-and-forget: the send is @Async, so the request returns immediately
-        // and a slow SMTP handshake never blocks the checkout flow.
+
         emailService.sendItineraryEmail(request);
         return ResponseEntity.accepted().body(Map.of("sent", true));
     }

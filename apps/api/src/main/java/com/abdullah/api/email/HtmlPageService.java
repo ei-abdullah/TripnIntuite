@@ -16,7 +16,7 @@ public class HtmlPageService {
                     <button type="submit" class="btn-accent">Verify email <span class="arrow">&rarr;</span></button>
                 </form>
                 """.formatted(token);
-        return page("Verify email — Majestor", body);
+        return page("Verify email — TripnIntuite", body);
     }
 
     public String getVerificationSuccessPage() {
@@ -26,7 +26,7 @@ public class HtmlPageService {
                 <h1>You're <em>in</em>.</h1>
                 <p class="lede">Your account is active. You can close this page and sign in.</p>
                 """;
-        return page("Email verified — Majestor", body);
+        return page("Email verified — TripnIntuite", body);
     }
 
     public String getVerificationErrorPage(String errorMessage) {
@@ -40,7 +40,7 @@ public class HtmlPageService {
                 <h1>Something's <em>off</em>.</h1>
                 <p class="lede">%s</p>
                 """.formatted(displayMessage);
-        return page("Verification failed — Majestor", body);
+        return page("Verification failed — TripnIntuite", body);
     }
 
     public String getPasswordResetSuccessPage() {
@@ -50,7 +50,7 @@ public class HtmlPageService {
                 <h1>Reset <em>complete</em>.</h1>
                 <p class="lede">Your password has been updated. You can sign in with the new one.</p>
                 """;
-        return page("Password reset — Majestor", body);
+        return page("Password reset — TripnIntuite", body);
     }
 
     public String getPasswordResetErrorPage(String errorMessage) {
@@ -61,7 +61,7 @@ public class HtmlPageService {
                 <h1>Something's <em>off</em>.</h1>
                 <p class="lede">%s</p>
                 """.formatted(displayMessage);
-        return page("Reset failed — Majestor", body);
+        return page("Reset failed — TripnIntuite", body);
     }
 
     /* --------------------------------------------------------------------
@@ -91,13 +91,13 @@ public class HtmlPageService {
             <body>
                 <main class="shell">
                     <header class="topbar">
-                        <div class="brand"><em>Majestor</em></div>
+                        <div class="brand"><em>TripnIntuite</em></div>
                         <div class="sub">Travel by feeling</div>
                     </header>
                     <section class="card">
                         {{BODY}}
                     </section>
-                    <footer class="foot">&copy; 2026 Majestor</footer>
+                    <footer class="foot">&copy; 2026 TripnIntuite</footer>
                 </main>
             </body>
             </html>

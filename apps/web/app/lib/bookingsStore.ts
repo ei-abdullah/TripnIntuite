@@ -64,6 +64,6 @@ export const useBookingsStore = create<BookingsState>()(
         set((s) => ({ bookings: s.bookings.filter((x) => x.id !== id) })),
       clearBookings: () => set({ bookings: [] }),
     }),
-    { name: "majestor-bookings" },
+    { name: "tripnintuite-bookings" },
   ),
 );

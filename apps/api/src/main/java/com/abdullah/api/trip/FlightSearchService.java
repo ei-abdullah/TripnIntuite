@@ -71,11 +71,8 @@ public class FlightSearchService {
             return new LegResultDto(origin, destination, date, List.of());
         }
 
-        // LiteAPI returns one journey per fare class — the same physical flight repeated
-        // across Economy Lite / Classic / Flex etc. Dedupe by flight signature
-        // (every segment's carrier + flight number + departure time), keeping the
-        // cheapest fare variant in each group.
-        Map<String, Journey> bySignature = journeys.stream()
+        Map<String, Journey> bySignature = journeys
+                .stream()
                 .collect(Collectors.toMap(
                          this::flightSignature,
                         j -> j,
@@ -96,30 +93,26 @@ public class FlightSearchService {
         return new LegResultDto(origin, destination, date, options);
     }
 
-    /**
-     * Book a flight. Simulated: LiteAPI flight booking is payment-gated (Stripe
-     * or an enabled credit line), which this sandbox account doesn't have. We
-     * synthesize a confirmation from the real selected offer so the trip can be
-     * completed end-to-end. To go live, replace the body with the real
-     * /v3.0/flights/prebooks + /v3.0/flights/bookings calls — the request shape
-     * (offerId + contact + passengers) already carries everything they need.
-     */
     public FlightBookResultDto bookFlight(FlightBookRequest request) {
         if (request == null || request.offerId() == null || request.offerId().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing flight offer.");
         }
+
         String bookingRef = "MJ-" + randomRef();
         log.info("Flight booked (simulated): ref={} offer={}", bookingRef, request.offerId());
+
         return new FlightBookResultDto(bookingRef, request.offerId(), "CONFIRMED", true);
     }
 
-    // Short, human-friendly booking reference (no ambiguous chars like 0/O/1/I).
     private static String randomRef() {
+
         final String alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         StringBuilder sb = new StringBuilder(6);
+
         for (int i = 0; i < 6; i++) {
             sb.append(alphabet.charAt(ThreadLocalRandom.current().nextInt(alphabet.length())));
         }
+
         return sb.toString();
     }
 
@@ -129,7 +122,6 @@ public class FlightSearchService {
         Segment last = segs.getLast();
         int stops = segs.size() - 1;
 
-        // ViaPoints = intermediate destinations (all segment.destinationCodes except the last one)
         List<ViaPoint> via = stops == 0
                 ? List.of()
                 : segs.subList(0, segs.size() - 1).stream()

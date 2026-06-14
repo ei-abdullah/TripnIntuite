@@ -12,7 +12,7 @@ public class AgentConfig {
     public ChatClient coordinatorAgent(ChatClient.Builder builder) {
         return builder
                 .defaultSystem("""
-                        You are the Coordinator Agent for a travel planning system called TripIntuition.
+                        You are the Coordinator Agent for a travel planning system called TripnIntuite.
 
                         Your job: break the user's freeform travel prompt into independent location
                         "intuitions." Each intuition describes ONE place the user wants to visit.

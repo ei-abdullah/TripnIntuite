@@ -20,23 +20,22 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Catch-all: any exception with no more specific handler above lands here.
-    // Previously these fell through to Spring's default /error path, which does
-    // NOT log the stack trace — so production 500s were invisible. Log the full
-    // trace and still return our standard ApiError body.
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(
             Exception exception,
             HttpServletRequest request
     ) {
-        log.error("Unhandled exception on {} {} -> {}: {}",
+        log.error(
+                "Unhandled exception on {} {} -> {}: {}",
                 request.getMethod(), request.getRequestURI(),
-                exception.getClass().getName(), exception.getMessage(), exception);
-        // TEMP DEBUG: surface the real exception type + message in the response
-        // body so failures are visible without digging through server logs.
-        // Revert to a generic "Internal server error" message before going live.
-        String detail = exception.getClass().getSimpleName()
+                exception.getClass().getName(), exception.getMessage(), exception
+        );
+
+        String detail = exception
+                .getClass()
+                .getSimpleName()
                 + (exception.getMessage() != null ? ": " + exception.getMessage() : "");
+
         return build(request, detail, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

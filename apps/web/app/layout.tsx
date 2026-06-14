@@ -26,9 +26,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TripIntuition — Travel by feeling",
+  title: "TripnIntuite — Travel by feeling",
   description:
-    "Describe the trip you can almost see. TripIntuition turns your travel intuitions into a multi-leg itinerary.",
+    "Describe the trip you can almost see. TripnIntuite turns your travel intuitions into a multi-leg itinerary.",
 };
 
 export default function RootLayout({
