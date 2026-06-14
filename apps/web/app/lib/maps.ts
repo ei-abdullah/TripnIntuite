@@ -125,7 +125,7 @@ export function flightPathMapUrl({
   width?: number;
   height?: number;
 }): string {
-  const key = "AIzaSyC2dpNycne5Qc8DQELbjJMuACvaucsLwPw";
+  const key = "YOUR_API_KEY";
 
   const points = [origin, ...via, destination];
 

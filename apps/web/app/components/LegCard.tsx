@@ -150,7 +150,7 @@ export default function LegCard({
         <div className="leg-section">
           <div className="title">
             <strong>Sites to visit</strong>{" "}
-            <span>recommended by TripIntuition</span>
+            <span>recommended by TripnIntuite</span>
           </div>
           <div className="sites-chips">
             {leg.sites.map((s, i) => (

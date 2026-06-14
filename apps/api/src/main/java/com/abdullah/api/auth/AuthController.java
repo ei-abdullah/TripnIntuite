@@ -40,6 +40,7 @@ public class AuthController {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
         return ResponseEntity.ok(authService.currentUser(principal.getUsername()));
     }
 

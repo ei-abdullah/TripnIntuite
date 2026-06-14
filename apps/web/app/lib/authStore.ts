@@ -24,7 +24,7 @@ export const useAuthStore = create<AuthState>()(
       setHydrated: (v) => set({ hydrated: v }),
     }),
     {
-      name: "majestor-auth",
+      name: "tripnintuite-auth",
       partialize: (s) => ({ token: s.token, user: s.user }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated(true);

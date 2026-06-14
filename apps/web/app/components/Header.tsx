@@ -60,7 +60,7 @@ export default function Header() {
       <div className="container topbar-inner">
         <Link href="/" className="brand">
           <span className="brand-mark">
-            <em>Majestor</em>
+            <em>TripnIntuite</em>
           </span>
         </Link>
 

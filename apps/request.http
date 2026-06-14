@@ -1,7 +1,7 @@
 ### Shortest flight from Islamabad (ISB) to London (LHR) on 1st July 2026 with no stops, for 1 adult, in USD currency.
 # curl --request POST
 #     --url https://api.liteapi.travel/v3.0/flights/rates
-#     --header 'X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953'
+#     --header 'X-API-Key: YOUR_API_KEY'
 #     --header 'accept: application/json'
 #     --header 'content-type: application/json'
 #     --data '
@@ -25,7 +25,7 @@
 #}
 #'
 POST https://api.liteapi.travel/v3.0/flights/rates
-X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953
+X-API-Key: YOUR_API_KEY
 accept: application/json
 Content-Type: application/json
 
@@ -55,7 +55,7 @@ Content-Type: application/json
 
 # curl --request POST
 #     --url https://api.liteapi.travel/v3.0/flights/rates
-#     --header 'X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953'
+#     --header 'X-API-Key: YOUR_API_KEY'
 #     --header 'accept: application/json'
 #     --header 'content-type: application/json'
 #     --data '
@@ -92,7 +92,7 @@ Content-Type: application/json
 #}
 #'
 POST https://api.liteapi.travel/v3.0/flights/rates
-X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953
+X-API-Key: YOUR_API_KEY
 accept: application/json
 Content-Type: application/json
 
@@ -134,7 +134,7 @@ Content-Type: application/json
 
 # curl --request POST
 #     --url https://api.liteapi.travel/v3.0/hotels/rates
-#     --header 'X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953'
+#     --header 'X-API-Key: YOUR_API_KEY'
 #     --header 'accept: application/json'
 #     --header 'content-type: application/json'
 #     --data '
@@ -156,7 +156,7 @@ Content-Type: application/json
 #}
 #'
 POST https://api.liteapi.travel/v3.0/hotels/rates
-X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953
+X-API-Key: YOUR_API_KEY
 accept: application/json
 Content-Type: application/json
 
@@ -184,11 +184,11 @@ Content-Type: application/json
 
 # curl --request GET
 #     --url 'https://api.liteapi.travel/v3.0/data/hotels?limit=10&longitude=-115.16988&latitude=36.1251&radius=10000&minRating=8.6'
-#     --header 'X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953'
+#     --header 'X-API-Key: YOUR_API_KEY'
 #     --header 'accept: application/json'
 GET https://api.liteapi.travel/v3.0/data/hotels?limit=10&longitude=-115.16988&latitude=36.1251&radius=10000&
     minRating=8.6
-X-API-Key: sand_ce497649-551d-4c4b-9ba3-632b0e5d4953
+X-API-Key: YOUR_API_KEY
 accept: application/json
 
 ###

@@ -103,7 +103,7 @@ export default function AgentConsole({
   return (
     <div className="console">
       <div className="console-head">
-        <span className="label">TripIntuition · Coordinator</span>
+        <span className="label">TripnIntuite · Coordinator</span>
         <div className="dots">
           <span></span>
           <span></span>

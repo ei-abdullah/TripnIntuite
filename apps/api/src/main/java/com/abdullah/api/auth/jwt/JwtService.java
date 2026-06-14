@@ -18,7 +18,6 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    // ~100 years. Effectively permanent for hackathon purposes — no refresh flow.
     private static final long ACCESS_TOKEN_TTL_MS = 1000L * 60 * 60 * 24 * 365 * 100;
 
     @Value("${security.jwt.secret-key}")

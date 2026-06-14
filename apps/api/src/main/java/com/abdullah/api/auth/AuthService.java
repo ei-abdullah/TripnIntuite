@@ -72,9 +72,6 @@ public class AuthService {
         }
 
         try {
-            // Build the URL from the current request context (host/scheme come
-            // from the incoming request) — same approach as the sister project.
-            // Runs on the request thread, before the async email dispatch.
             String verificationUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                     .path("/api/v1/auth/signup/verify")
                     .queryParam("token", verificationToken)

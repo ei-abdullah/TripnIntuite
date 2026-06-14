@@ -31,7 +31,7 @@ public class EmailService {
         return sendEmail(
                 email,
                 verificationUrl,
-                "Verify your email — Majestor",
+                "Verify your email — TripnIntuite",
                 "Verify email",
                 "Welcome.",
                 "Tap below to verify your email and start planning trips by feeling, not by name.",
@@ -44,7 +44,7 @@ public class EmailService {
         return sendEmail(
                 email,
                 resetUrl,
-                "Reset your password — Majestor",
+                "Reset your password — TripnIntuite",
                 "Reset password",
                 "Choose a new password.",
                 "We received a request to reset your password. Tap below to set a new one.",
@@ -81,7 +81,7 @@ public class EmailService {
                                     <tr>
                                         <td align="center" style="background-color:#111111;padding:48px 32px;">
                                             <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:32px;font-weight:400;color:#F7F5F0;letter-spacing:-0.01em;line-height:1;">
-                                                <em style="font-style:italic;">Majestor</em>
+                                                <em style="font-style:italic;">TripnIntuite</em>
                                             </p>
                                             <p style="margin:12px 0 0;font-size:11px;text-transform:uppercase;letter-spacing:0.22em;color:#A39E96;">Travel by feeling</p>
                                         </td>
@@ -127,9 +127,9 @@ public class EmailService {
                                     <!-- Footer (ink) -->
                                     <tr>
                                         <td align="center" style="background-color:#111111;padding:28px 32px;">
-                                            <p style="margin:0 0 6px;color:#F7F5F0;font-family:Georgia,'Times New Roman',serif;font-size:15px;letter-spacing:-0.01em;line-height:1;"><em style="font-style:italic;">Majestor</em></p>
+                                            <p style="margin:0 0 6px;color:#F7F5F0;font-family:Georgia,'Times New Roman',serif;font-size:15px;letter-spacing:-0.01em;line-height:1;"><em style="font-style:italic;">TripnIntuite</em></p>
                                             <p style="margin:0;color:#A39E96;font-size:11px;line-height:1.55;">Automated message · please do not reply</p>
-                                            <p style="margin:10px 0 0;color:#6B6862;font-size:11px;">&copy; 2026 Majestor. All rights reserved.</p>
+                                            <p style="margin:10px 0 0;color:#6B6862;font-size:11px;">&copy; 2026 TripnIntuite. All rights reserved.</p>
                                         </td>
                                     </tr>
                                 </table>
@@ -139,7 +139,7 @@ public class EmailService {
                                     <tr>
                                         <td align="center" style="padding:20px 16px;">
                                             <p style="margin:0;color:#A39E96;font-size:11px;text-align:center;line-height:1.5;">
-                                                You received this because you signed up for Majestor.<br>
+                                                You received this because you signed up for TripnIntuite.<br>
                                                 If you didn't, you can safely ignore this email.
                                             </p>
                                         </td>
@@ -187,7 +187,7 @@ public class EmailService {
             helper.setFrom(from);
             helper.setText(content, true);
             helper.addAttachment(
-                    "majestor-trip.ics",
+                    "tripnintuite-trip.ics",
                     new ByteArrayResource(ics.getBytes(StandardCharsets.UTF_8)),
                     "text/calendar"
             );
@@ -245,7 +245,7 @@ public class EmailService {
                     <tr><td align="center" valign="top">
                         <table role="presentation" width="560" cellspacing="0" cellpadding="0" border="0" style="background-color:#FFFFFF;border:1px solid #E4E0D8;max-width:560px;width:100%%;">
                             <tr><td align="center" style="background-color:#111111;padding:40px 32px;">
-                                <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:30px;color:#F7F5F0;line-height:1;"><em style="font-style:italic;">Majestor</em></p>
+                                <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:30px;color:#F7F5F0;line-height:1;"><em style="font-style:italic;">TripnIntuite</em></p>
                                 <p style="margin:12px 0 0;font-size:11px;text-transform:uppercase;letter-spacing:0.22em;color:#A39E96;">You're booked</p>
                             </td></tr>
                             <tr><td style="padding:40px 36px 16px;">
@@ -263,7 +263,7 @@ public class EmailService {
                                 </table>
                             </td></tr>
                             <tr><td align="center" style="background-color:#111111;padding:24px 32px;">
-                                <p style="margin:0;color:#A39E96;font-size:11px;line-height:1.55;">Automated confirmation · Flight bookings are sandbox-simulated.<br>&copy; 2026 Majestor. Travel by feeling.</p>
+                                <p style="margin:0;color:#A39E96;font-size:11px;line-height:1.55;">Automated confirmation · Flight bookings are sandbox-simulated.<br>&copy; 2026 TripnIntuite. Travel by feeling.</p>
                             </td></tr>
                         </table>
                     </td></tr>

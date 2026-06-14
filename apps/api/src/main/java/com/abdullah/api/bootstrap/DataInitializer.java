@@ -12,12 +12,7 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.util.List;
 
-/**
- * Seeds a ready-to-use, already-verified account on startup. With
- * {@code ddl-auto: create-drop} the schema is wiped on every boot, so this
- * guarantees there's always a known login available without going through the
- * signup + email-verification flow. Idempotent: skips if the email exists.
- */
+
 @Slf4j
 @Component
 @RequiredArgsConstructor

@@ -23,7 +23,7 @@ public final class IcsBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("BEGIN:VCALENDAR").append(CRLF);
         sb.append("VERSION:2.0").append(CRLF);
-        sb.append("PRODID:-//Majestor//Trip Itinerary//EN").append(CRLF);
+        sb.append("PRODID:-//TripnIntuite//Trip Itinerary//EN").append(CRLF);
         sb.append("CALSCALE:GREGORIAN").append(CRLF);
         sb.append("METHOD:PUBLISH").append(CRLF);
 
@@ -45,7 +45,7 @@ public final class IcsBuilder {
                     + (f.carrierName() != null ? " · " + f.carrierName() : ""))).append(CRLF);
             sb.append("DESCRIPTION:").append(esc(
                     (f.label() != null ? f.label() + " — " : "")
-                            + "Booking ref " + nv(f.bookingRef()) + " · Majestor")).append(CRLF);
+                            + "Booking ref " + nv(f.bookingRef()) + " · TripnIntuite")).append(CRLF);
             sb.append("END:VEVENT").append(CRLF);
         }
 
@@ -65,7 +65,7 @@ public final class IcsBuilder {
                     (h.label() != null ? h.label() + " — " : "")
                             + "Confirmation "
                             + (h.hotelConfirmationCode() != null ? h.hotelConfirmationCode() : nv(h.bookingId()))
-                            + " · Majestor")).append(CRLF);
+                            + " · TripnIntuite")).append(CRLF);
             sb.append("END:VEVENT").append(CRLF);
         }
 
@@ -74,7 +74,7 @@ public final class IcsBuilder {
     }
 
     private static String uid(String stamp, int seq) {
-        return stamp + "-" + seq + "@majestor";
+        return stamp + "-" + seq + "@tripnintuite";
     }
 
     // "2026-07-01T08:30:00..." -> "20260701T083000" (floating local time, no TZ).

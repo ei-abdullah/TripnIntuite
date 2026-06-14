@@ -100,7 +100,7 @@ export const useTripStore = create<TripState>()(
         }),
     }),
     {
-      name: "majestor-trip",
+      name: "tripnintuite-trip",
       partialize: (s) => ({
         prompt: s.prompt,
         intuitions: s.intuitions,

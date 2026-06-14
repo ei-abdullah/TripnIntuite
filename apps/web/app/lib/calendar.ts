@@ -47,7 +47,7 @@ export function calendarLinksForBooking(b: TripBooking): CalendarLink[] {
         title: `Flight ${f.route} — ${f.carrierName}`,
         start,
         end,
-        details: `${f.label} · Booking ref ${f.bookingRef} · Majestor`,
+        details: `${f.label} · Booking ref ${f.bookingRef} · TripnIntuite`,
       }),
     });
   }
@@ -64,7 +64,7 @@ export function calendarLinksForBooking(b: TripBooking): CalendarLink[] {
         title: `Stay — ${h.name}`,
         start,
         end,
-        details: `${h.label} · Confirmation ${ref} · Majestor`,
+        details: `${h.label} · Confirmation ${ref} · TripnIntuite`,
       }),
     });
   }

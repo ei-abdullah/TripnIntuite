@@ -198,7 +198,7 @@ export default function HomePage() {
           {running && localIntuitions.length === 0 && !error && (
             <div className="console">
               <div className="console-head">
-                <span className="label">TripIntuition · Coordinator</span>
+                <span className="label">TripnIntuite · Coordinator</span>
                 <div className="dots">
                   <span></span>
                   <span></span>

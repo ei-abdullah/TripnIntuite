@@ -27,7 +27,7 @@ export default function HotelGoogleMap({
 }) {
   return (
     <Map
-      mapId="MAJESTOR_HOTELS"
+      mapId="TRIPNINTUITE_HOTELS"
       defaultCenter={destination}
       defaultZoom={13}
       gestureHandling="greedy"

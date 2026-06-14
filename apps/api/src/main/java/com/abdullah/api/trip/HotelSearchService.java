@@ -25,17 +25,12 @@ public class HotelSearchService {
     private static final Logger log = LoggerFactory.getLogger(HotelSearchService.class);
     private static final int TOP_N = 8;
     private static final int FETCH_LIMIT = 50;
-    // How many top-rated candidates we live-check for availability. Keeps the
-    // rates payload small while still surfacing enough available hotels.
     private static final int CANDIDATE_POOL = 25;
     private static final double MIN_RATING = 7.0;
     private static final int MAX_ROOMS = 6;
     private static final int MAX_IMAGES = 20;
     private static final String DEFAULT_CURRENCY = "USD";
     private static final String DEFAULT_NATIONALITY = "US";
-
-    // Data + rates live on api.liteapi.travel; prebook/book live on the
-    // separate booking host (book.liteapi.travel).
     private final RestClient restClient;
     private final RestClient bookClient;
 
@@ -76,7 +71,6 @@ public class HotelSearchService {
             return new HotelResultDto(latitude, longitude, radiusMeters, List.of());
         }
 
-        // Top candidates by rating; only these get a live availability check.
         List<HotelDataItem> candidates = response.data().stream()
                 .filter(h -> h.id() != null && h.name() != null)
                 .sorted(Comparator
@@ -85,8 +79,6 @@ public class HotelSearchService {
                 .limit(CANDIDATE_POOL)
                 .toList();
 
-        // hotelId -> the cheapest offer for the dates. Empty if the rates call failed
-        // or nothing is available; those hotels fall back to "rates on request".
         Map<String, OfferPrice> priceById = fetchAvailability(
                 candidates
                         .stream()
@@ -97,8 +89,6 @@ public class HotelSearchService {
                 adults
         );
 
-        // Available-first: available hotels (ranked by price) come before the rest
-        // (ranked by rating), so the list never looks empty in the sandbox.
         List<HotelOptionDto> options = candidates.stream()
                 .map(h -> toHotelOption(h, priceById.get(h.id()), nights))
                 .sorted(Comparator
@@ -116,11 +106,6 @@ public class HotelSearchService {
         return new HotelResultDto(latitude, longitude, radiusMeters, options);
     }
 
-    /**
-     * Live availability + cheapest price for a batch of hotels over the dates.
-     * Returns a map of hotelId -> cheapest offer. Resilient: any failure yields an
-     * empty map so the listing degrades to content-only rather than erroring.
-     */
     private Map<String, OfferPrice> fetchAvailability(
             List<String> hotelIds, String checkin, String checkout, int adults) {
         if (hotelIds.isEmpty()) return Map.of();
@@ -163,11 +148,6 @@ public class HotelSearchService {
         }
     }
 
-    /**
-     * Fetch live room rates for one hotel over a date range. Used to populate the
-     * detail drawer's pricing. Returns rooms sorted cheapest-first; an empty list
-     * means no availability (or a sandbox gap), never an error to the caller.
-     */
     public HotelRatesDto fetchRates(String hotelId, String checkin, String checkout, int adults) {
         long t0 = System.currentTimeMillis();
         int nights = (int) ChronoUnit.DAYS.between(LocalDate.parse(checkin), LocalDate.parse(checkout));
@@ -192,7 +172,6 @@ public class HotelSearchService {
                     .retrieve()
                     .body(RatesResponse.class);
         } catch (Exception e) {
-            // Never bubble a 500 to the client — the drawer just shows no rooms.
             log.warn("LiteAPI rates call failed for hotel={} {}→{}: {}", hotelId, checkin, checkout, e.getMessage());
             return new HotelRatesDto(hotelId, checkin, checkout, nights, DEFAULT_CURRENCY, List.of());
         }
@@ -215,12 +194,6 @@ public class HotelSearchService {
         return new HotelRatesDto(hotelId, checkin, checkout, nights, DEFAULT_CURRENCY, rooms);
     }
 
-    /**
-     * Rich content for one hotel from GET /v3.0/data/hotel: media gallery, video,
-     * facilities, policies, check-in/out. Content only — pricing comes from rates.
-     * Resilient: any failure returns an empty shell so the drawer still renders
-     * from the listing data it already has.
-     */
     public HotelDetailsDto fetchHotelDetails(String hotelId) {
         long t0 = System.currentTimeMillis();
 
@@ -245,7 +218,6 @@ public class HotelSearchService {
         }
         HotelDetailData d = response.data();
 
-        // defaultImage first, then by order; prefer the HD url when present.
         List<HotelImageDto> images = d.hotelImages() == null ? List.of()
                 : d.hotelImages().stream()
                         .filter(img -> img.url() != null || img.urlHd() != null)
@@ -258,7 +230,6 @@ public class HotelSearchService {
                         .limit(MAX_IMAGES)
                         .toList();
 
-        // Prefer structured facilities[].name; fall back to hotelFacilities[] strings.
         List<String> facilities;
         if (d.facilities() != null && !d.facilities().isEmpty()) {
             facilities = d.facilities().stream()
@@ -347,12 +318,6 @@ public class HotelSearchService {
         );
     }
 
-    /**
-     * Step 1 of booking: create a checkout session for a room offer. Re-validates
-     * availability and locks the final price, returning a {@code prebookId} for the
-     * book step. A sold-out or invalid offer surfaces as a 409/502 (never a 500),
-     * so it can't masquerade as an auth failure on the client.
-     */
     public PrebookResultDto prebookHotel(String offerId) {
         if (offerId == null || offerId.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "offerId is required");
@@ -404,20 +369,13 @@ public class HotelSearchService {
         );
     }
 
-    /**
-     * Step 2 of booking: finalize a hotel reservation from a prebookId. Pays via
-     * ACC_CREDIT_CARD, which in sandbox simulates the charge and returns a real
-     * confirmed booking. An expired prebook or any failure surfaces as a 409/502
-     * (never a 500) so it can't masquerade as an auth failure on the client.
-     */
     public HotelBookResultDto bookHotel(HotelBookRequest request) {
         if (request == null || request.prebookId() == null || request.prebookId().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "prebookId is required");
         }
+
         long t0 = System.currentTimeMillis();
 
-        // The API requires occupancyNumber on each guest (1-based slot); assign
-        // it here so callers don't have to. The holder keeps it null (dropped).
         List<GuestDto> guests = request.guests() != null ? request.guests() : List.of();
         List<GuestDto> numberedGuests = new ArrayList<>(guests.size());
         for (int i = 0; i < guests.size(); i++) {
@@ -432,6 +390,7 @@ public class HotelSearchService {
         body.put("payment", Map.of("method", "ACC_CREDIT_CARD"));
 
         BookResponse response;
+
         try {
             response = bookClient.post()
                     .uri("/v3.0/rates/book")
@@ -492,7 +451,6 @@ public class HotelSearchService {
         );
     }
 
-    // --- hotel details response (GET /v3.0/data/hotel) ---
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record HotelDetailResponse(HotelDetailData data) {}
 
